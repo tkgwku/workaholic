@@ -1,13 +1,13 @@
 # シフトから実労働時間を計算するHTML
 
-### instruction
+## instruction
 1. 好きなところにclone.
 2. ウェブブラウザでindex.htmlを開く.
 3. 開きやすいようにブックマークする.
 
 or
 
-1. visit (demo page)[http://jar.oiran.org/temp] 
+1. visit [demo page](http://jar.oiran.org/temp)
 
 ### 使える形式
 (例)
