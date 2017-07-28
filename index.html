@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Workaholic</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <style>
+        body{
+            color:#444;
+        }
+        /*.json{
+            display: none
+        }*/
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h2>Workaholic v1.0</h2>
+        <textarea id="shift_textarea" rows="7" class="form-control" placeholder="シフト表を全選択してコピー&ペースト..."></textarea><br>
+        <div>
+            <input class="btn btn-default" type="submit" value="Submit" id="shift_submit">
+        </div>
+        <!--insert table here...-->
+        <div id="shift_table" style="margin-bottom: 6em;margin-top: 4em"></div>
+        <div class="json">
+            <h4>バックアップ用</h4>
+            <textarea id="json_textarea" rows="7" class="form-control" placeholder="" onclick="this.focus();this.select()" readonly="readonly"></textarea>
+
+            <div class="checkbox">
+                <label>
+                    <input type="checkbox" value="" id="json_checkbox">
+                    JSONを整理して表示
+                </label>
+            </div>
+            <br>
+            <textarea id="json_input_textarea" rows="3" class="form-control" placeholder="データが消えたとき用、バックアップのjsonから読み込み..."></textarea><br>
+            <div style="margin-bottom: 6em">
+                <input class="btn btn-default" type="submit" value="Submit" id="json_submit">
+            </div>
+        </div>
+    </div> <!-- /container -->
+
+</body>
+<script type="text/javascript">
+
+/*
+ * 使用するlocalStorage
+ *  - data: theWorkingTreeをstring化したもの
+ *  - json_checkbox: チェックボックスがcheckedである.
+ *
+ */
+
+theYggdrasil = {}; // 全部のデータを格納するArray
+
+today = new Date(); // 現在時刻
+thisYear = today.getFullYear(); // YYYY
+thisMonth = today.getMonth(); // 0-11であることに注意
+thisDate = today.getDate(); // DD
+thisMs = today.getTime();
+
+/*
+ * チェックボックスの初期化とイベントハンドラ登録。
+ */
+function initCheckboxAttr() {
+    var checkboxIds = ["json_checkbox"];
+    for (var boxId of checkboxIds){
+        var node = $("#" + boxId);
+        var item = localStorage.getItem(boxId);
+        if (item === "1"){
+            node.checked = true;
+        } else {
+            node.checked = false;
+        }
+        // register onchange event handler
+        node.onchange = function(e){
+            var data = e.srcElement.checked ? "1" : "0";
+            localStorage.setItem(e.srcElement.id, data);
+        }
+    }
+}
+
+/*
+ * bodyが読み込まれたときに発火する関数。
+ */
+function bodyLoadEvent() {
+    initCheckboxAttr();
+
+    // shift_submitエレメントにonclick属性を追加。(イベントハンドラを登録)
+    $('#shift_submit').onclick = function(){
+        extractData();
+        localStorage.setItem("data", JSON.stringify(theYggdrasil));
+    };
+    $('#json_submit').onclick = function(){
+        theYggdrasil = JSON.parse($('#json_input_textarea').value);
+        saveData();
+        localStorage.setItem("data", JSON.stringify(theYggdrasil));
+    };
+
+    var local_data = localStorage.getItem("data");
+    if (local_data != null) {
+        if ($('#json_checkbox').checked){
+            $('#json_textarea').value = JSON.stringify(JSON.parse(local_data), null, "    ");
+        } else {
+            $('#json_textarea').value = local_data;
+        }
+        theYggdrasil = JSON.parse(local_data);
+        buildTableContent();
+    }
+}
+
+/*
+ * テキストエリアの内容を解釈してJSON化・table化する。
+ */
+function extractData(){
+    ////////この関数のみの変数(var宣言をつける。本当は変数名がかぶらないならいらない。)で、for-loopの外に置いときたい組////////
+
+    var rowValue = $('#shift_textarea').value;
+    var lines = rowValue.split('\n');
+
+    var theDay = "";
+    var theWorktime = [] // 勤務時間を格納するArray(数がわからず複数個ありうるのでArray)
+    var theWorkingTree = {"modified": thisYear+"/"+(thisMonth+1)+"/"+thisDate}; // 半期のデータ記録を格納するObject
+
+    var isFirstHalf = null;
+    var theMonth = null;
+
+    ///////////lineごとの処理///////////
+    for (var line of lines) {
+        var dayMatch = line.match(/\d+\/\d+(?=\([月火水木金土日]\))/g); 
+        // Array<String> matches
+        // ["8/14"] or null
+        //console.log(dayMatch);
+
+        if (dayMatch != null && dayMatch.length == 1){
+            // この行が8/14(金)[確定]とか書いてある行
+
+            if (theWorktime.length > 0){
+                // すでに今までに11:30-22:15とかがあった
+                theWorkingTree[theDay] = theWorktime;
+                // ツリーに保存 (まだtheDayは前のループ時のtheDay)
+                theWorktime = [];
+                // 一時データは消去
+            }
+            theDay = addYearToDay(dayMatch[0]); // "8/14"
+            // theDayを更新(次への布石)
+
+            //console.log((new Date(theDay)).toDateString()); -> Sun Aug 19 2001
+            if (isFirstHalf == null){
+                var _d = new Date(theDay);
+                isFirstHalf = _d.getDate() <= 15;
+                theMonth = _d.getMonth() + 1;
+                theYear = _d.getFullYear();
+            }
+        }
+
+        timeMatch = line.match(/(\d+):(\d+)-(\d+):(\d+)/);
+        // Array<String> matches
+        // ["11:30-12:30", "11", "30", "12", "30"]
+
+        if (timeMatch != null){
+            //この行が11:30-20:15とか書いてある行
+            var start = {"hour": parseInt(timeMatch[1]), "min": parseInt(timeMatch[2])};
+            var finish = {"hour": parseInt(timeMatch[3]), "min": parseInt(timeMatch[4])};
+            theWorktime.push({"start": start, "finish": finish});
+        }
+    }
+    ///////////end: lineごとの処理///////////
+    //ループ後の未完の処理をねじ込んだ
+    if (theWorktime.length > 0){
+        theWorkingTree[theDay] = theWorktime;
+        theWorktime = [];
+    }
+    var _postfix = isFirstHalf ? "0" : "1";
+    var _title = theYear + "." +theMonth + "." + _postfix;  //2017.8.0
+    theYggdrasil[_title] = theWorkingTree;
+
+    saveData();
+}
+
+function saveData() {
+    // JSONを整理して表示
+    if ($('#json_checkbox').checked){
+        $('#json_textarea').value = JSON.stringify(theYggdrasil, null, "    ");
+    } else {
+        $('#json_textarea').value = JSON.stringify(theYggdrasil);
+    }
+    buildTableContent();
+}
+
+function buildTableContent() {
+    var theNearestDateMs = 0; // 次の勤務day
+
+    var keys = Object.keys(theYggdrasil);
+    keys.sort(function(a,b){
+        var _as = a.split("."); 
+        var _bs = b.split("."); 
+        if (parseInt(_as[0]) > parseInt(_bs[0])) return 1; 
+        if (parseInt(_as[0]) < parseInt(_bs[0])) return -1; 
+        if (parseInt(_as[1]) > parseInt(_bs[1])) return 1;
+        if (parseInt(_as[1]) < parseInt(_bs[1])) return -1;
+        if (parseInt(_as[2]) > parseInt(_bs[2])) return 1;
+        if (parseInt(_as[2]) < parseInt(_bs[2])) return -1;
+        return 0;
+    });
+
+    var tableHtml = '<table class="table table-striped"><tr><th>#</th><th>実働時間</th><th>作成日時</th></tr>';
+
+    for (var keyTerm of keys) {
+        if (theYggdrasil.hasOwnProperty(keyTerm)) {
+            var _WorkingTree = theYggdrasil[keyTerm];
+            var actualTime = 0;
+            var modifiedDay = "";
+            for (var keyDay in _WorkingTree){
+                if (_WorkingTree.hasOwnProperty(keyDay)){
+                    if (keyDay === "modified"){
+                        modifiedDay = _WorkingTree[keyDay];
+                    } else {
+                        var dateObj = new Date(keyDay);
+                        var _nowms = Date.now();
+                        var _dtime = dateObj.getTime() - _nowms;
+                        if (_dtime > 0 && _dtime < Math.abs(theNearestDateMs - _nowms)){
+                            theNearestDateMs = dateObj.getTime();
+                        }
+                        shifts = _WorkingTree[keyDay];
+                        for (shift of shifts){
+                            var bonded = getBondedMinute(shift);
+                            var rest = getRestMin(bonded);
+                            actualTime += bonded - rest;
+                        }
+                    }
+                }
+            }
+            tableHtml += makeTrHtml(keyTerm, actualTime, modifiedDay);
+        }
+    }
+    tableHtml += "</table>"
+    $("#shift_table").innerHTML = tableHtml;
+}
+
+function makeTrHtml(keyTerm, actualTime, modifiedDay) {
+    _t = "<tr><td>";
+    _ks = keyTerm.split(".");
+    _post = _ks[2] == "0" ? "前半" : "後半";
+    _t += _ks[1] + "月" + _post + "</td><td>";
+    _t += actualTime/60 + "</td><td>";
+    _t += modifiedDay + "</td></tr>"
+    return _t;
+}
+
+/*
+ * min以上max未満であればtrue
+ */
+function isin(num, min, max){
+    return num >= min && num < max;
+}
+
+/*
+ * 拘束時間から休憩時間を求める関数。
+ */
+function getRestMin(bondedMin) {
+    var restMin = 0;
+    if (isin(bondedMin, 270, 360)){ //4h30m - 6h
+        restMin = 30;
+    } else if (isin(bondedMin, 360, 720)){ //6h - 12h
+        restMin = 60;
+    } else if (bondedMin >= 720){ //12h -
+        restMin = 120;
+    }
+    return restMin;
+}
+
+/*
+ * worktimeObjの構造は
+ *  - "start"  - "hour" : int
+ *             - "min"  : int
+ *  - "finish" - "hour" : int
+ *             - "min"  : int
+ *
+ * これから拘束時間を求める関数。
+ */
+function getBondedMinute(worktimeObj){
+    var _st = worktimeObj["start"];
+    var _fn = worktimeObj["finish"];
+
+    var startH = _st["hour"];
+    var startM = _st["min"];
+    var finishH = _fn["hour"];
+    var finishM = _fn["min"];
+
+    if (finishH < startH || (finishH == startH && finishM < startM)){
+        finishH += 24;
+    }
+
+    return (finishH - startH) * 60 + (finishM - startM);
+}
+/*
+ * Day(月&日)に西暦(例えば2017)をつけ加えたYYYY/MM/DDみたいにする関数。
+ * MM/DDなら2016/4/1と2017/4/1が区別できなくて、上書きされてしまうので。
+ */
+function addYearToDay(theDay) {
+    var _day = theDay.split('/');
+    var _theMonth = parseInt(_day[0]);
+    var theDate = parseInt(_day[1]);
+
+    // 年明け前に正月のシフト考えるような年明けを挟むときの処理
+    year = thisYear;
+    if (thisMonth >= 10 && _theMonth <= 2){
+        year ++;
+    }
+
+    return year + "/" + theDay;
+}
+
+/*
+ * jQueryの$とおんなじ
+ * CSS-likeに#idとか.class、tagnameでHTML-DOM-Element or Array<HTML-DOM-Element>を返す関数。
+ */
+function $(elemId) {
+    if (elemId.startsWith('#')){
+        return document.getElementById(elemId.split('#')[1]);
+    } else if (elemId.startsWith('.')){
+        return document.getElementsByClassName(elemId.split('.')[1]);
+    } else {
+        return document.getElementsByTagName(elemId);
+    }
+}
+
+// bodyのロード時に関数を実行。 document.body === $('body')。 ===は型まで同じでtrue。
+document.body.onload = bodyLoadEvent();
+</script>
+</html>
