@@ -1,5 +1,15 @@
 <!DOCTYPE html>
 <html>
+<!--
+made by yudai takegawa
+(c) 2017 all rights reserved
+
+you can:
+ - distribute
+ - modify
+you cannot:
+ - commercial use
+-->
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -9,13 +19,60 @@
         body{
             color:#444;
         }
-        /*.json{
-            display: none
-        }*/
+        .hoverer:hover {
+            background-color: #eee;
+            color: #000;
+            cursor: pointer;
+        }
+        .delete{
+            width: .8em;
+        }
+        .delete:hover{
+            cursor: pointer;
+        }
+        #showTerm{
+            top: 10px;
+            background-color: #fff;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 0 4px;
+            display: inline-block;
+            margin:1em 3em;
+        }
+        #termBack{
+            position: absolute;
+            top:0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: none;
+            z-index: 10;
+            background-color: rgba(255,255,255,.5);
+        }
+        .block {
+            padding: 10px;
+        }
+        #shift_table div{
+            margin: 3em 0;
+            border: 1px solid #eeeeee;
+            border-left: 5px solid #1b809e;
+            border-radius: 2px;
+            padding: 20px
+        }
+        #shift_table div h4{
+            color :#1b809e;
+            font-weight: bold;
+        }
+        #shift_table div p{
+            font-size: 2em
+        }
     </style>
 </head>
 
 <body>
+    <div id="termBack">
+        <div id="showTerm"></div>
+    </div>
     <div class="container">
         <h2>Workaholic v1.0</h2>
         <textarea id="shift_textarea" rows="7" class="form-control" placeholder="シフト表を全選択してコピー&ペースト..."></textarea><br>
@@ -23,7 +80,13 @@
             <input class="btn btn-default" type="submit" value="Submit" id="shift_submit">
         </div>
         <!--insert table here...-->
-        <div id="shift_table" style="margin-bottom: 6em;margin-top: 4em"></div>
+        <div id="shift_table" style="margin: 3em 0;"></div>
+        <div class="checkbox" style="margin-bottom: 10em;">
+            <label>
+                <input type="checkbox" value="" id="delete_checkbox">
+                削除時に警告を表示しない
+            </label>
+        </div>
         <div class="json">
             <h4>バックアップ用</h4>
             <textarea id="json_textarea" rows="7" class="form-control" placeholder="" onclick="this.focus();this.select()" readonly="readonly"></textarea>
@@ -54,6 +117,8 @@
 
 theYggdrasil = {}; // 全部のデータを格納するArray
 
+showingTerm = false;
+
 today = new Date(); // 現在時刻
 thisYear = today.getFullYear(); // YYYY
 thisMonth = today.getMonth(); // 0-11であることに注意
@@ -64,7 +129,7 @@ thisMs = today.getTime();
  * チェックボックスの初期化とイベントハンドラ登録。
  */
 function initCheckboxAttr() {
-    var checkboxIds = ["json_checkbox"];
+    var checkboxIds = ["json_checkbox", "delete_checkbox"];
     for (var boxId of checkboxIds){
         var node = $("#" + boxId);
         var item = localStorage.getItem(boxId);
@@ -87,15 +152,25 @@ function initCheckboxAttr() {
 function bodyLoadEvent() {
     initCheckboxAttr();
 
+    $('#termBack').onclick = function(e){
+        console.log(showingTerm)
+        if (showingTerm){
+            hideTerm();
+        }
+    };
+
+    $('#showTerm').onclick = function(e){
+        e.stopPropagation();
+    };
+
     // shift_submitエレメントにonclick属性を追加。(イベントハンドラを登録)
     $('#shift_submit').onclick = function(){
         extractData();
-        localStorage.setItem("data", JSON.stringify(theYggdrasil));
     };
+
     $('#json_submit').onclick = function(){
         theYggdrasil = JSON.parse($('#json_input_textarea').value);
         saveData();
-        localStorage.setItem("data", JSON.stringify(theYggdrasil));
     };
 
     var local_data = localStorage.getItem("data");
@@ -125,6 +200,7 @@ function extractData(){
 
     var isFirstHalf = null;
     var theMonth = null;
+    var theYear = null;
 
     ///////////lineごとの処理///////////
     for (var line of lines) {
@@ -172,6 +248,11 @@ function extractData(){
         theWorkingTree[theDay] = theWorktime;
         theWorktime = [];
     }
+
+    if (theYear == null){
+        //invalid input
+        return;
+    }
     var _postfix = isFirstHalf ? "0" : "1";
     var _title = theYear + "." +theMonth + "." + _postfix;  //2017.8.0
     theYggdrasil[_title] = theWorkingTree;
@@ -187,10 +268,12 @@ function saveData() {
         $('#json_textarea').value = JSON.stringify(theYggdrasil);
     }
     buildTableContent();
+    localStorage.setItem("data", JSON.stringify(theYggdrasil));
 }
 
 function buildTableContent() {
-    var theNearestDateMs = 0; // 次の勤務day
+    var theNearestDateMs = 0; // 次の勤務dayMs
+    var theNearestWorkTime = []; //次の勤務デイの勤務時間Array
 
     var keys = Object.keys(theYggdrasil);
     keys.sort(function(a,b){
@@ -205,48 +288,143 @@ function buildTableContent() {
         return 0;
     });
 
-    var tableHtml = '<table class="table table-striped"><tr><th>#</th><th>実働時間</th><th>作成日時</th></tr>';
+    var tableHtml = '<table class="table table-striped"><tr><th>#</th><th>期間</th><th>実働時間</th><th>作成日時</th></tr>';
 
+    // 半月毎の処理
     for (var keyTerm of keys) {
-        if (theYggdrasil.hasOwnProperty(keyTerm)) {
-            var _WorkingTree = theYggdrasil[keyTerm];
-            var actualTime = 0;
-            var modifiedDay = "";
-            for (var keyDay in _WorkingTree){
-                if (_WorkingTree.hasOwnProperty(keyDay)){
-                    if (keyDay === "modified"){
-                        modifiedDay = _WorkingTree[keyDay];
-                    } else {
-                        var dateObj = new Date(keyDay);
-                        var _nowms = Date.now();
-                        var _dtime = dateObj.getTime() - _nowms;
-                        if (_dtime > 0 && _dtime < Math.abs(theNearestDateMs - _nowms)){
-                            theNearestDateMs = dateObj.getTime();
-                        }
-                        shifts = _WorkingTree[keyDay];
-                        for (shift of shifts){
-                            var bonded = getBondedMinute(shift);
-                            var rest = getRestMin(bonded);
-                            actualTime += bonded - rest;
-                        }
-                    }
+        if (!theYggdrasil.hasOwnProperty(keyTerm)) {
+            continue;
+        }
+        var _WorkingTree = theYggdrasil[keyTerm];
+        var actualTime = 0;
+        var modifiedDay = "";
+        for (var keyDay in _WorkingTree){
+            if (!_WorkingTree.hasOwnProperty(keyDay)){
+                continue;
+            }
+            if (keyDay === "modified"){
+                modifiedDay = _WorkingTree[keyDay];
+            } else {
+                var dateObj = new Date(keyDay);
+                var _nowms = Date.now();
+                var _dtime = dateObj.getTime() - _nowms;
+                var shifts = _WorkingTree[keyDay];
+                if (_dtime > 0 && _dtime < Math.abs(theNearestDateMs - _nowms)){
+                    theNearestDateMs = dateObj.getTime();
+                    theNearestWorkTime = shifts;
+                }
+                for (var shift of shifts){
+                    var bonded = getBondedMinute(shift);
+                    var rest = getRestMin(bonded);
+                    actualTime += bonded - rest;
                 }
             }
-            tableHtml += makeTrHtml(keyTerm, actualTime, modifiedDay);
         }
+        tableHtml += makeTrHtml(keyTerm, actualTime, modifiedDay);
     }
-    tableHtml += "</table>"
+
+    tableHtml += '</table>'
+    if (theNearestDateMs >0) {
+        tableHtml = '<div><h4>次の出勤日:</h4><p>{0} {1}</p></div>'.format(makeDateString(theNearestDateMs, '{1}/{2} ({3})'), makeWorktimeString(theNearestWorkTime)) + tableHtml;
+    }
     $("#shift_table").innerHTML = tableHtml;
 }
 
+function makeWorktimeString(shifts) {
+    var r = '';
+    var c = 0;
+    for (var shift of shifts){
+        if (c > 0) r+= ', '
+        var _st = shift["start"];
+        var _fn = shift["finish"];
+        var _sth = _st["hour"];
+        var _stm = _st["min"];
+        var _fnh = _fn["hour"];
+        var _fnm = _fn["min"];
+        r += '{0}:{1}-{2}:{3}'.format(_sth,_stm,_fnh,_fnm);
+        c++;
+    }
+    return r;
+}
+
+/*
+ * いろんな形式のdateから好きな形の日付Stringに変換する関数
+ */
+function makeDateString(ms, formatting){
+    var days = ["日","月","火","水","木","金","土"]
+    var dateObj;
+    if (typeof ms === 'number'){
+        dateObj = new Date(ms);
+    } else if (ms instanceof Date){
+        dateObj = ms;
+    } else if (typeof ms === 'string'){
+        dateObj = new Date(ms);
+    }
+    var year = dateObj.getFullYear();
+    var month = dateObj.getMonth() + 1;
+    var date = dateObj.getDate();
+    var day = days[dateObj.getDay()];
+    return formatting.format(year, month, date, day);
+}
+
+/*
+ * tableのtrをつくる関数
+ */
 function makeTrHtml(keyTerm, actualTime, modifiedDay) {
-    _t = "<tr><td>";
-    _ks = keyTerm.split(".");
-    _post = _ks[2] == "0" ? "前半" : "後半";
-    _t += _ks[1] + "月" + _post + "</td><td>";
-    _t += actualTime/60 + "</td><td>";
-    _t += modifiedDay + "</td></tr>"
+    var _t  = '<tr>'
+    _t += '<td><img src="src/delete.svg" title="このデータを削除" class="delete" onclick="deleteTerm(\'{0}\')"></td>'.format(keyTerm);
+    _t += '<td title="詳しいデータを見る" class="hoverer" onclick="showTerm(\'{0}\')">{1}</td>'.format(keyTerm, parseKeyTerm(keyTerm));
+    _t += '<td>{0}</td>'.format(actualTime/60);
+    _t += '<td>{0}</td>'.format(modifiedDay);
+    _t += '</tr>';
     return _t;
+}
+
+function parseKeyTerm(keyTerm) {
+    var _ks = keyTerm.split(".");
+    var _post = _ks[2] == "0" ? "前半" : "後半";
+    return '{0}月{1}'.format(_ks[1], _post);
+}
+
+function deleteTerm(keyTerm){
+    if ($('#delete_checkbox').checked || window.confirm("本当に"+parseKeyTerm(keyTerm)+"のデータを削除しますか?")){
+        delete theYggdrasil[keyTerm];
+        saveData();
+    }
+}
+
+function showTerm(keyTerm) {
+    var _WorkingTree = theYggdrasil[keyTerm];
+    var actualTime = 0;
+    var modifiedDay = "";
+    var html = '<button type="button" class="close" aria-label="Close" onclick="hideTerm()"><span aria-hidden="true">&times;</span></button>'
+    //日付ごとに処理
+    for (var keyDay in _WorkingTree){
+        if (_WorkingTree.hasOwnProperty(keyDay)){
+            if (keyDay === "modified"){
+                modifiedDay = _WorkingTree[keyDay];
+            } else {
+                shifts = _WorkingTree[keyDay];
+                var bonded = 0;
+                var rest = 0;
+                for (shift of shifts){
+                    bonded += getBondedMinute(shift);
+                    rest += getRestMin(bonded);
+                }
+                html += '<div class="block"><p><strong>{0}</strong></p><p>勤務時間: {1}</p><p>実働時間: {2}h</p></div>'
+                            .format(makeDateString(keyDay, '{0}/{1}/{2} ({3})'), makeWorktimeString(shifts), (bonded-rest)/60);
+            }
+        }
+    }
+    $("#showTerm").innerHTML += html;
+    $("#termBack").style.display = 'block';
+    showingTerm = true;
+}
+
+function hideTerm(){
+    $("#showTerm").innerHTML = '';
+    $("#termBack").style.display = 'none';
+    showingTerm = false;
 }
 
 /*
@@ -325,6 +503,14 @@ function $(elemId) {
     } else {
         return document.getElementsByTagName(elemId);
     }
+}
+
+String.prototype.format = function (arg) {
+    var text = this;
+    for (var i=0; i < arguments.length; i++) {
+        text = text.replace("{" + i + "}", arguments[i]);
+    }
+    return text;
 }
 
 // bodyのロード時に関数を実行。 document.body === $('body')。 ===は型まで同じでtrue。
