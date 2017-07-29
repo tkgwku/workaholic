@@ -34,17 +34,19 @@ you cannot:
             top: 10px;
             background-color: #fff;
             border: 1px solid #ccc;
-            border-radius: 5px;
-            padding: 0 4px;
+            border-radius: 8px;
+            padding: 18px 20px;
             display: inline-block;
-            margin:1em 3em;
+            margin-top: 1em;
         }
         #termBack{
+            text-align: center;
             position: absolute;
             top:0;
             left: 0;
             width: 100%;
-            height: 100%;
+            height: auto !important;
+            min-height: 100%;
             display: none;
             z-index: 10;
             background-color: rgba(255,255,255,.5);
@@ -70,11 +72,12 @@ you cannot:
 </head>
 
 <body>
-    <div id="termBack">
-        <div id="showTerm"></div>
-    </div>
     <div class="container">
+        <div id="termBack">
+            <div id="showTerm"></div>
+        </div>
         <h2>Workaholic v1.0</h2>
+        <p>textareaにシフト表をコピペしてsubmit。submitしたときに、同時にデータをブラウザに保存します。</p>
         <textarea id="shift_textarea" rows="7" class="form-control" placeholder="シフト表を全選択してコピー&ペースト..."></textarea><br>
         <div>
             <input class="btn btn-default" type="submit" value="Submit" id="shift_submit">
@@ -89,6 +92,7 @@ you cannot:
         </div>
         <div class="json">
             <h4>バックアップ用</h4>
+            <p>下のtextareaには上のデータがjson形式で表示されます。これをどこかのファイルで保存・共有しておくと、ブラウザが変わったりデバイスが変わってもデータを引き継ぐことができます。</p>
             <textarea id="json_textarea" rows="7" class="form-control" placeholder="" onclick="this.focus();this.select()" readonly="readonly"></textarea>
 
             <div class="checkbox">
@@ -103,6 +107,7 @@ you cannot:
                 <input class="btn btn-default" type="submit" value="Submit" id="json_submit">
             </div>
         </div>
+        <p>powered by <a href="http://getbootstrap.com/">bootstrap</a></p>
     </div> <!-- /container -->
 
 </body>
@@ -112,7 +117,7 @@ you cannot:
  * 使用するlocalStorage
  *  - data: theWorkingTreeをstring化したもの
  *  - json_checkbox: チェックボックスがcheckedである.
- *
+ *  - delete_checkbox: 同上
  */
 
 theYggdrasil = {}; // 全部のデータを格納するArray
@@ -258,6 +263,7 @@ function extractData(){
     theYggdrasil[_title] = theWorkingTree;
 
     saveData();
+    $('#shift_textarea').value = '';
 }
 
 function saveData() {
@@ -397,7 +403,7 @@ function showTerm(keyTerm) {
     var _WorkingTree = theYggdrasil[keyTerm];
     var actualTime = 0;
     var modifiedDay = "";
-    var html = '<button type="button" class="close" aria-label="Close" onclick="hideTerm()"><span aria-hidden="true">&times;</span></button>'
+    var html = '<button type="button" class="close" aria-label="Close" id="hideTerm" onclick="hideTerm()"><span aria-hidden="true">&times;</span></button>'
     //日付ごとに処理
     for (var keyDay in _WorkingTree){
         if (_WorkingTree.hasOwnProperty(keyDay)){
