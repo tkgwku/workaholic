@@ -7,7 +7,7 @@
 
 or
 
-1. visit [demo page](http://jar.oiran.org/temp)
+1. visit [demo page](https://tkgwku.github.io/workaholic/)
 
 ### 使える形式
 (例)
