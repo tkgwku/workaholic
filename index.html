@@ -116,12 +116,12 @@ you cannot:
 
 /*
  * 使用するlocalStorage
- *  - data: theWorkingTreeをstring化したもの
- *  - json_checkbox: チェックボックスがcheckedである.
- *  - delete_checkbox: 同上
+ *  - data              :  theYggdrasilをstring化したもの
+ *  - json_checkbox     :  チェックボックスがcheckedであるなら1
+ *  - delete_checkbox   :  同上
  */
 
-theYggdrasil = {}; // 全部のデータを格納するobj
+theYggdrasil = {};
 /*
  * theYggdrasil(全部のデータを格納するobj)の構造は
  * 
@@ -133,8 +133,12 @@ theYggdrasil = {}; // 全部のデータを格納するobj
  * }
  */
 
+// 半月の勤務履歴を開いているか否か。
+// showingTerm === ($("#showTerm").display === 'none') -> true
 showingTerm = false;
 
+// 実行日のdate obj。 
+// 年月日だけわかればいいのでHTMLが読まれる段階で作成。
 today = new Date();
 
 /*
@@ -151,6 +155,7 @@ function initCheckboxAttr() {
             node.checked = false;
         }
         // register onchange event handler
+        // チェックボックスの値が変化するたびに、チェックボックスをチェックしてデータをlocalStorageに格納。
         node.onchange = function(e){
             var data = e.srcElement.checked ? "1" : "0";
             localStorage.setItem(e.srcElement.id, data);
@@ -196,6 +201,10 @@ function bodyLoadEvent() {
     }
 }
 
+/*
+ * ある日の勤務時間objのArrayに、新しい仲間を加える。
+ * もしもどれかの勤務時間と連続してる一連の時間だったならmerge。
+ */
 function pushWorktime(shifts, sh, sm, fh, fm){
     var start = {"hour": sh, "min": sm};
     var finish = {"hour": fh, "min": fm};
@@ -218,6 +227,9 @@ function pushWorktime(shifts, sh, sm, fh, fm){
     return _shifts;
 }
 
+/*
+ * 2つの時間HH/MMが一致するかを返すだけの関数。
+ */
 function timeEquals(time1, time2){
     return time1["hour"] === time2["hour"] && time1["min"] === time2["min"];
 }
@@ -298,6 +310,9 @@ function extractData(){
     $('#shift_textarea').value = '';
 }
 
+/*
+ * jsonの読み取り専用textareaの値を更新し、テーブルの内容を更新し、localStorageにデータを保存する3つの作業をまとめた関数。
+ */
 function saveData() {
     // JSONを整理して表示
     if ($('#json_checkbox').checked){
@@ -337,9 +352,14 @@ function buildTableContent() {
             continue;
         }
 
+        // 半月の勤務時間データ
         var _WorkingTree = theYggdrasil[keyTerm];
+
+        // 拘束時間の合計
         var wholeBondedMin = 0;
+        // 休憩時間の合計
         var wholeRestMin = 0;
+        // 作成日時
         var modifiedDay = "";
 
         /*
@@ -365,13 +385,14 @@ function buildTableContent() {
 
                 var dateObj = new Date(keyDay); // Date("2017/8/1")
                 var _dtime = dateObj.getTime() - today.getTime(); // 今(ただしhtml読み込み時点の時間)との時間差ms
-                if (theNearestDate == null || (_dtime > 0 && _dtime < Math.abs(theNearestDate.getTime() - today.getTime()))){
-                    // 今より勤務日程があとで、より現時点との時間的距離が近い
+                if (_dtime > 0 && (theNearestDate == null || _dtime < Math.abs(theNearestDate.getTime() - today.getTime()))){
+                    // 今より勤務日程があとで、より現時点との時間的距離が近い。比較対象がない(=null)ならもうそれを採用だ。
                     theNearestDate = dateObj;
                     theNearestWorkTime = shifts;
                 }
 
                 for (var shift of shifts){
+                    // 拘束時間
                     var bonded = getBondedMinute(shift);
                     wholeBondedMin += bonded;
                     wholeRestMin += getRestMin(bonded);
@@ -388,6 +409,9 @@ function buildTableContent() {
     $("#shift_table").innerHTML = tableHtml;
 }
 
+/*
+ * 勤務時間objのArrayから"11:30-20:00"といったstringをつくる関数。
+ */
 function makeWorktimeString(shifts) {
     var r = '';
     var c = 0;
@@ -411,7 +435,7 @@ function makeWorktimeString(shifts) {
  * いろんな形式のdateから好きな形の日付Stringに変換する関数
  */
 function makeDateString(input, formatting){
-    var days = ["日","月","火","水","木","金","土"]
+    const days = ["日","月","火","水","木","金","土"]
     var dateObj;
     if (typeof input === 'number'){
         dateObj = new Date(input);
@@ -428,7 +452,11 @@ function makeDateString(input, formatting){
 }
 
 /*
- * tableのtrをつくる関数
+ * 一覧tableのtrをつくる関数。
+ * 
+ * # |  期間   | 実働時間 |  作成日時
+ * --+--------+---------+-----------
+ * × | 8月前半 |  40.25  | 2017/7/30
  */
 function makeTrHtml(keyTerm, actualTime, modifiedDay) {
     var _t  = '<tr>'
@@ -440,12 +468,18 @@ function makeTrHtml(keyTerm, actualTime, modifiedDay) {
     return _t;
 }
 
+/*
+ * "2017.8.0"とかの形式的な記述から"8月前半"という人が読みやすい文字列を返す関数。
+ */
 function parseKeyTerm(keyTerm) {
     var _ks = keyTerm.split(".");
     var _post = _ks[2] == "0" ? "前半" : "後半";
     return '{0}月{1}'.format(_ks[1], _post);
 }
 
+/*
+ * 半月分のデータを消す関数。バツマークをクリックしたときに呼ばれる。
+ */
 function deleteTerm(keyTerm){
     if ($('#delete_checkbox').checked || window.confirm("本当に"+parseKeyTerm(keyTerm)+"のデータを削除しますか?")){
         delete theYggdrasil[keyTerm];
@@ -459,9 +493,8 @@ function deleteTerm(keyTerm){
  * buildTableContent()でも同じような処理があるが、ループ内の処理に若干の差異があるため統合はしない。
  */
 function showTerm(keyTerm) {
+    // 対象となる半月の勤務時間データ
     var _WorkingTree = theYggdrasil[keyTerm];
-    var actualTime = 0;
-    var modifiedDay = "";
     var html = '<button type="button" class="close" aria-label="Close" id="hideTerm" onclick="hideTerm()"><span aria-hidden="true">&times;</span></button>'
     //日付ごとに処理
     /*
@@ -476,13 +509,16 @@ function showTerm(keyTerm) {
      */
     for (var keyDay in _WorkingTree){
         if (_WorkingTree.hasOwnProperty(keyDay)){
-            if (keyDay === "modified"){
-                modifiedDay = _WorkingTree[keyDay];
-            } else {
-                shifts = _WorkingTree[keyDay];
+            // 今回は作成日時はいらない
+            if (keyDay != "modified"){
+                // その日の勤務時間Array
+                var shifts = _WorkingTree[keyDay];
+                // その日の合計拘束時間
                 var alldaybonded = 0;
+                // その日の合計休憩時間
                 var alldayrest = 0;
-                for (shift of shifts){
+                // 勤務時間ブロックごとの処理
+                for (var shift of shifts){
                     var bonded = getBondedMinute(shift);
                     alldaybonded += bonded;
                     alldayrest += getRestMin(bonded);
@@ -497,6 +533,9 @@ function showTerm(keyTerm) {
     showingTerm = true;
 }
 
+/*
+ * 半月の勤務時間一覧を消す関数。
+ */
 function hideTerm(){
     $("#showTerm").innerHTML = '';
     $("#termBack").style.display = 'none';
@@ -512,10 +551,10 @@ function isin(num, min, max){
 
 /*
  * 拘束時間から休憩時間を求める関数。
- * 4.5 -  6 -> 0.5
- *   6 -  7 -> 0.75
- *   7 - 12 -> 1
- *  12 -    -> 2
+ *  4.5 -  6.0 -> 0.50
+ *  6.0 -  7.0 -> 0.75
+ *  7.0 - 12.0 -> 1.00
+ * 12.0 -      -> 2.00
  */
 function getRestMin(bondedMin) {
     var restMin = 0;
@@ -559,8 +598,9 @@ function getBondedMinute(worktimeObj){
     return (finishH - startH) * 60 + (finishM - startM);
 }
 /*
- * Day(月&日)に西暦(例えば2017)をつけ加えたYYYY/MM/DDみたいにする関数。
+ * Day(MM/DD)に適当な西暦をつけ加えたYYYY/MM/DDみたいにする関数。
  * MM/DDなら2016/4/1と2017/4/1が区別できなくて、上書きされてしまうので。
+ * textareaからデータを引き出すときに使われる。
  */
 function addYearToDay(theDay) {
     var _day = theDay.split('/');
@@ -569,6 +609,8 @@ function addYearToDay(theDay) {
 
     // 年明け前に正月のシフト考えるような年明けを挟むときの処理
     year = today.getFullYear();
+    // このHTMLを開いている付きが11,12月で、textareaからのデータの月が1,2月。
+    // jsonやloclaStorageから読み込むときにこの処理は行われない。
     if (today.getMonth() >= 10 && _theMonth <= 2){
         year ++;
     }
@@ -590,6 +632,9 @@ function $(elemId) {
     }
 }
 
+/*
+ * 自前のformat関数。文字列内の{i}を順番に引数と入れ替えていく。
+ */
 String.prototype.format = function (arg) {
     var text = this;
     for (var i=0; i < arguments.length; i++) {
@@ -598,7 +643,7 @@ String.prototype.format = function (arg) {
     return text;
 }
 
-// bodyのロード時に関数を実行。 document.body === $('body')[0]。 ===は型まで同じでtrue。
+// bodyのロード時に関数を実行。 document.body === $('body')[0] -> true (===は型まで同じでtrueを返す言語構造)
 document.body.onload = bodyLoadEvent();
 </script>
 </html>
