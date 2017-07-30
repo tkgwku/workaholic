@@ -165,7 +165,6 @@ function bodyLoadEvent() {
     initCheckboxAttr();
 
     $('#termBack').onclick = function(e){
-        console.log(showingTerm)
         if (showingTerm){
             hideTerm();
         }
@@ -216,7 +215,6 @@ function pushWorktime(shifts, sh, sm, fh, fm){
     if (!merged){
         _shifts.push({"start": start, "finish": finish})
     }
-    console.log(_shifts)
     return _shifts;
 }
 
@@ -246,7 +244,6 @@ function extractData(){
         var dayMatch = line.match(/\d+\/\d+(?=\([月火水木金土日]\))/g); 
         // Array<String> matches
         // ["8/14"] or null
-        //console.log(dayMatch);
 
         if (dayMatch != null && dayMatch.length == 1){
             // この行が8/14(金)[確定]とか書いてある行
