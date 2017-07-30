@@ -50,6 +50,7 @@ you cannot:
             display: none;
             z-index: 10;
             background-color: rgba(255,255,255,.5);
+            padding-bottom: 15em
         }
         .block {
             padding: 10px;
@@ -120,7 +121,17 @@ you cannot:
  *  - delete_checkbox: 同上
  */
 
-theYggdrasil = {}; // 全部のデータを格納するArray
+theYggdrasil = {}; // 全部のデータを格納するobj
+/*
+ * theYggdrasil(全部のデータを格納するobj)の構造は
+ * 
+ * {
+ *   - "2017.8.0" : 8月上半期の勤務obj
+ *   - "2017.8.1" : 8月下半期の勤務obj
+ *   - "2017.9.0" : 9月上半期の勤務obj
+ *   - ...
+ * }
+ */
 
 showingTerm = false;
 
@@ -191,22 +202,22 @@ function pushWorktime(shifts, sh, sm, fh, fm){
     var finish = {"hour": fh, "min": fm};
     var _shifts = [];
     var merged = false;
-    if (shifts.length > 0) {
-        for (var shift of shifts){
-            if (timeEquals(shift["finish"], start)){
-                shifts.push({"start": shift["start"], "finish": finish})
-                merged = true;
-            } else if (timeEquals(shift["start"], finish)){
-                shifts.push({"start": start, "finish": shift["finish"]})
-                merged = true;
-            } else {
-                shifts.push(shift);
-            }
-        }
-        if (!merged){
-            shifts.push({"start": start, "finish": finish})
+    for (var shift of shifts){
+        if (timeEquals(shift["finish"], start)){
+             _shifts.push({"start": shift["start"], "finish": finish})
+            merged = true;
+        } else if (timeEquals(shift["start"], finish)){
+            _shifts.push({"start": start, "finish": shift["finish"]})
+            merged = true;
+        } else {
+            _shifts.push(shift);
         }
     }
+    if (!merged){
+        _shifts.push({"start": start, "finish": finish})
+    }
+    console.log(_shifts)
+    return _shifts;
 }
 
 function timeEquals(time1, time2){
@@ -276,14 +287,17 @@ function extractData(){
     /////////////////line処理完了//////////////////
 
     if (theYear == null){
-        // inputがおかしかった
+        // inputされたデータががおかしかった
         return;
     }
+
     var _postfix = isFirstHalf ? "0" : "1"; // 前半なら0, 後半なら1
     var _title = theYear + "." +theMonth + "." + _postfix;  //2017.8.0 = 2017年8月前半
     theYggdrasil[_title] = theWorkingTree;
 
     saveData();
+
+    // textareaの内容をリセット
     $('#shift_textarea').value = '';
 }
 
@@ -332,7 +346,7 @@ function buildTableContent() {
         var modifiedDay = "";
 
         /*
-         * _WorkingTreeの構造は
+         * _WorkingTree(半期の勤務obj)の構造は
          * 
          * {
          *   - "modified" : "2017/7/30"
@@ -442,12 +456,27 @@ function deleteTerm(keyTerm){
     }
 }
 
+/*
+ * tableのタイトルの部分("8月前半"など)をクリックしたときに発火する関数
+ * theYggdrasilから指定の半月分のデータを抜き出し表示。
+ * buildTableContent()でも同じような処理があるが、ループ内の処理に若干の差異があるため統合はしない。
+ */
 function showTerm(keyTerm) {
     var _WorkingTree = theYggdrasil[keyTerm];
     var actualTime = 0;
     var modifiedDay = "";
     var html = '<button type="button" class="close" aria-label="Close" id="hideTerm" onclick="hideTerm()"><span aria-hidden="true">&times;</span></button>'
     //日付ごとに処理
+    /*
+     * _WorkingTreeの構造は、8月上半期なら
+     * 
+     * {
+     *   - "modified" : "2017/7/30"
+     *   - "2017/8/1" : [勤務時間Obj1, 勤務時間Obj2...]
+     *   - "2017/8/3" : [勤務時間Obj1, 勤務時間Obj2...]
+     *   ...
+     * }
+     */
     for (var keyDay in _WorkingTree){
         if (_WorkingTree.hasOwnProperty(keyDay)){
             if (keyDay === "modified"){
@@ -486,10 +515,14 @@ function isin(num, min, max){
 
 /*
  * 拘束時間から休憩時間を求める関数。
+ * 4.5 -  6 -> 0.5
+ *   6 -  7 -> 0.75
+ *   7 - 12 -> 1
+ *  12 -    -> 2
  */
 function getRestMin(bondedMin) {
     var restMin = 0;
-    if (isin(bondedMin, 270, 360)){ //4h30m - 6h
+    if (isin(bondedMin, 270, 360)){ //4.5h - 6h
         restMin = 30;
     } else if (isin(bondedMin, 360, 420)){ //6h - 7h
         restMin = 45;
@@ -502,11 +535,14 @@ function getRestMin(bondedMin) {
 }
 
 /*
- * worktimeObjの構造は
- *  - "start"  - "hour" : int
- *             - "min"  : int
- *  - "finish" - "hour" : int
- *             - "min"  : int
+ * worktimeObjの構造は、8:30-16:45なら
+ *
+ * {
+ *  - "start"  - "hour" : 8
+ *             - "min"  : 30
+ *  - "finish" - "hour" : 16
+ *             - "min"  : 45
+ * }
  *
  * これから拘束時間を求める関数。
  */
@@ -544,8 +580,8 @@ function addYearToDay(theDay) {
 }
 
 /*
- * jQueryの$とおんなじ
- * CSS-likeに#idとか.class、tagnameでHTML-DOM-Element or Array<HTML-DOM-Element>を返す関数。
+ * jQueryの$()とおんなじ
+ * CSS-likeに#idとか.class、tagnameで、　HTML-DOM-Element or Array<HTML-DOM-Element>を返す関数。
  */
 function $(elemId) {
     if (elemId.startsWith('#')){
