@@ -124,11 +124,7 @@ theYggdrasil = {}; // 全部のデータを格納するArray
 
 showingTerm = false;
 
-today = new Date(); // 現在時刻
-thisYear = today.getFullYear(); // YYYY
-thisMonth = today.getMonth(); // 0-11であることに注意
-thisDate = today.getDate(); // DD
-thisMs = today.getTime();
+today = new Date();
 
 /*
  * チェックボックスの初期化とイベントハンドラ登録。
@@ -190,6 +186,33 @@ function bodyLoadEvent() {
     }
 }
 
+function pushWorktime(shifts, sh, sm, fh, fm){
+    var start = {"hour": sh, "min": sm};
+    var finish = {"hour": fh, "min": fm};
+    var _shifts = [];
+    var merged = false;
+    if (shifts.length > 0) {
+        for (var shift of shifts){
+            if (timeEquals(shift["finish"], start)){
+                shifts.push({"start": shift["start"], "finish": finish})
+                merged = true;
+            } else if (timeEquals(shift["start"], finish)){
+                shifts.push({"start": start, "finish": shift["finish"]})
+                merged = true;
+            } else {
+                shifts.push(shift);
+            }
+        }
+        if (!merged){
+            shifts.push({"start": start, "finish": finish})
+        }
+    }
+}
+
+function timeEquals(time1, time2){
+    return time1["hour"] === time2["hour"] && time1["min"] === time2["min"];
+}
+
 /*
  * テキストエリアの内容を解釈してJSON化・table化する。
  */
@@ -201,7 +224,7 @@ function extractData(){
 
     var theDay = "";
     var theWorktime = [] // 勤務時間を格納するArray(数がわからず複数個ありうるのでArray)
-    var theWorkingTree = {"modified": thisYear+"/"+(thisMonth+1)+"/"+thisDate}; // 半期のデータ記録を格納するObject
+    var theWorkingTree = {"modified": makeDateString(today, '{0}/{1}/{2}')}; // 半期のデータ記録を格納するObject
 
     var isFirstHalf = null;
     var theMonth = null;
@@ -224,10 +247,9 @@ function extractData(){
                 theWorktime = [];
                 // 一時データは消去
             }
-            theDay = addYearToDay(dayMatch[0]); // "8/14"
+            theDay = addYearToDay(dayMatch[0]); // "2017/8/14"
             // theDayを更新(次への布石)
 
-            //console.log((new Date(theDay)).toDateString()); -> Sun Aug 19 2001
             if (isFirstHalf == null){
                 var _d = new Date(theDay);
                 isFirstHalf = _d.getDate() <= 15;
@@ -242,24 +264,23 @@ function extractData(){
 
         if (timeMatch != null){
             //この行が11:30-20:15とか書いてある行
-            var start = {"hour": parseInt(timeMatch[1]), "min": parseInt(timeMatch[2])};
-            var finish = {"hour": parseInt(timeMatch[3]), "min": parseInt(timeMatch[4])};
-            theWorktime.push({"start": start, "finish": finish});
+            theWorktime = pushWorktime(theWorktime, parseInt(timeMatch[1]), parseInt(timeMatch[2]), parseInt(timeMatch[3]), parseInt(timeMatch[4]));
         }
     }
     ///////////end: lineごとの処理///////////
-    //ループ後の未完の処理をねじ込んだ
+    // ループ後の未完の処理
     if (theWorktime.length > 0){
         theWorkingTree[theDay] = theWorktime;
         theWorktime = [];
     }
+    /////////////////line処理完了//////////////////
 
     if (theYear == null){
-        //invalid input
+        // inputがおかしかった
         return;
     }
-    var _postfix = isFirstHalf ? "0" : "1";
-    var _title = theYear + "." +theMonth + "." + _postfix;  //2017.8.0
+    var _postfix = isFirstHalf ? "0" : "1"; // 前半なら0, 後半なら1
+    var _title = theYear + "." +theMonth + "." + _postfix;  //2017.8.0 = 2017年8月前半
     theYggdrasil[_title] = theWorkingTree;
 
     saveData();
@@ -278,10 +299,11 @@ function saveData() {
 }
 
 function buildTableContent() {
-    var theNearestDateMs = 0; // 次の勤務dayMs
+    var theNearestDate = null; // 次の勤務dayのdateobj
     var theNearestWorkTime = []; //次の勤務デイの勤務時間Array
 
     var keys = Object.keys(theYggdrasil);
+    // 並び替え (2017.8.0と2016.9.1など...)
     keys.sort(function(a,b){
         var _as = a.split("."); 
         var _bs = b.split("."); 
@@ -293,45 +315,64 @@ function buildTableContent() {
         if (parseInt(_as[2]) < parseInt(_bs[2])) return -1;
         return 0;
     });
+    ////end: 並び替え////
 
     var tableHtml = '<table class="table table-striped"><tr><th>#</th><th>期間</th><th>実働時間</th><th>作成日時</th></tr>';
 
     // 半月毎の処理
+    // keysはtheYggdrasilのkey配列を並び替えたもの
     for (var keyTerm of keys) {
         if (!theYggdrasil.hasOwnProperty(keyTerm)) {
             continue;
         }
+
         var _WorkingTree = theYggdrasil[keyTerm];
-        var actualTime = 0;
+        var wholeBondedMin = 0;
+        var wholeRestMin = 0;
         var modifiedDay = "";
+
+        /*
+         * _WorkingTreeの構造は
+         * 
+         * {
+         *   - "modified" : "2017/7/30"
+         *   - "2017/8/1" : [勤務時間Obj1, 勤務時間Obj2...]
+         *   - "2017/8/3" : [勤務時間Obj1, 勤務時間Obj2...]
+         *   ...
+         * }
+         */
         for (var keyDay in _WorkingTree){
             if (!_WorkingTree.hasOwnProperty(keyDay)){
                 continue;
             }
+
+            // keyDayは"2017/8/1"系か"modified" (modifiedは一回だけ)
             if (keyDay === "modified"){
-                modifiedDay = _WorkingTree[keyDay];
+                modifiedDay = _WorkingTree[keyDay]; // "2017/7/30"とかが格納される
             } else {
-                var dateObj = new Date(keyDay);
-                var _nowms = Date.now();
-                var _dtime = dateObj.getTime() - _nowms;
-                var shifts = _WorkingTree[keyDay];
-                if (_dtime > 0 && _dtime < Math.abs(theNearestDateMs - _nowms)){
-                    theNearestDateMs = dateObj.getTime();
+                var shifts = _WorkingTree[keyDay]; // Array<Object> [勤務時間Obj1, 勤務時間Obj2...]
+
+                var dateObj = new Date(keyDay); // Date("2017/8/1")
+                var _dtime = dateObj.getTime() - today.getTime(); // 今(ただしhtml読み込み時点の時間)との時間差ms
+                if (theNearestDate == null || (_dtime > 0 && _dtime < Math.abs(theNearestDate.getTime() - _nowms))){
+                    // 今より勤務日程があとで、より現時点との時間的距離が近い
+                    theNearestDate = dateObj;
                     theNearestWorkTime = shifts;
                 }
+
                 for (var shift of shifts){
                     var bonded = getBondedMinute(shift);
-                    var rest = getRestMin(bonded);
-                    actualTime += bonded - rest;
+                    wholeBondedMin += bonded;
+                    wholeRestMin += getRestMin(bonded);
                 }
             }
         }
-        tableHtml += makeTrHtml(keyTerm, actualTime, modifiedDay);
+        tableHtml += makeTrHtml(keyTerm, wholeBondedMin - wholeRestMin, modifiedDay);
     }
 
     tableHtml += '</table>'
-    if (theNearestDateMs >0) {
-        tableHtml = '<div><h4>次の出勤日:</h4><p>{0} {1}</p></div>'.format(makeDateString(theNearestDateMs, '{1}/{2} ({3})'), makeWorktimeString(theNearestWorkTime)) + tableHtml;
+    if (theNearestDate != null) {
+        tableHtml = '<div><h4>次の出勤日:</h4><p>{0} {1}</p></div>'.format(makeDateString(theNearestDate, '{1}/{2} ({3})'), makeWorktimeString(theNearestWorkTime)) + tableHtml;
     }
     $("#shift_table").innerHTML = tableHtml;
 }
@@ -347,6 +388,8 @@ function makeWorktimeString(shifts) {
         var _stm = _st["min"];
         var _fnh = _fn["hour"];
         var _fnm = _fn["min"];
+        if (_stm  < 10) _stm = '0' + _stm;
+        if (_fnm < 10) _fnm = '0' + _fnm;
         r += '{0}:{1}-{2}:{3}'.format(_sth,_stm,_fnh,_fnm);
         c++;
     }
@@ -356,15 +399,15 @@ function makeWorktimeString(shifts) {
 /*
  * いろんな形式のdateから好きな形の日付Stringに変換する関数
  */
-function makeDateString(ms, formatting){
+function makeDateString(input, formatting){
     var days = ["日","月","火","水","木","金","土"]
     var dateObj;
-    if (typeof ms === 'number'){
-        dateObj = new Date(ms);
-    } else if (ms instanceof Date){
-        dateObj = ms;
-    } else if (typeof ms === 'string'){
-        dateObj = new Date(ms);
+    if (typeof input === 'number'){
+        dateObj = new Date(input);
+    } else if (input instanceof Date){
+        dateObj = input;
+    } else if (typeof input === 'string'){
+        dateObj = new Date(input);
     }
     var year = dateObj.getFullYear();
     var month = dateObj.getMonth() + 1;
@@ -411,14 +454,15 @@ function showTerm(keyTerm) {
                 modifiedDay = _WorkingTree[keyDay];
             } else {
                 shifts = _WorkingTree[keyDay];
-                var bonded = 0;
-                var rest = 0;
+                var alldaybonded = 0;
+                var alldayrest = 0;
                 for (shift of shifts){
-                    bonded += getBondedMinute(shift);
-                    rest += getRestMin(bonded);
+                    var bonded = getBondedMinute(shift);
+                    alldaybonded += bonded;
+                    alldayrest += getRestMin(bonded);
                 }
                 html += '<div class="block"><p><strong>{0}</strong></p><p>勤務時間: {1}</p><p>実働時間: {2}h</p></div>'
-                            .format(makeDateString(keyDay, '{0}/{1}/{2} ({3})'), makeWorktimeString(shifts), (bonded-rest)/60);
+                            .format(makeDateString(keyDay, '{0}/{1}/{2} ({3})'), makeWorktimeString(shifts), (alldaybonded-alldayrest)/60);
             }
         }
     }
@@ -447,7 +491,9 @@ function getRestMin(bondedMin) {
     var restMin = 0;
     if (isin(bondedMin, 270, 360)){ //4h30m - 6h
         restMin = 30;
-    } else if (isin(bondedMin, 360, 720)){ //6h - 12h
+    } else if (isin(bondedMin, 360, 420)){ //6h - 7h
+        restMin = 45;
+    } else if (isin(bondedMin, 420, 720)){ //7h - 12h
         restMin = 60;
     } else if (bondedMin >= 720){ //12h -
         restMin = 120;
@@ -519,7 +565,7 @@ String.prototype.format = function (arg) {
     return text;
 }
 
-// bodyのロード時に関数を実行。 document.body === $('body')。 ===は型まで同じでtrue。
+// bodyのロード時に関数を実行。 document.body === $('body')[0]。 ===は型まで同じでtrue。
 document.body.onload = bodyLoadEvent();
 </script>
 </html>
