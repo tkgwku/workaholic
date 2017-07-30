@@ -354,7 +354,7 @@ function buildTableContent() {
 
                 var dateObj = new Date(keyDay); // Date("2017/8/1")
                 var _dtime = dateObj.getTime() - today.getTime(); // 今(ただしhtml読み込み時点の時間)との時間差ms
-                if (theNearestDate == null || (_dtime > 0 && _dtime < Math.abs(theNearestDate.getTime() - _nowms))){
+                if (theNearestDate == null || (_dtime > 0 && _dtime < Math.abs(theNearestDate.getTime() - today.getTime()))){
                     // 今より勤務日程があとで、より現時点との時間的距離が近い
                     theNearestDate = dateObj;
                     theNearestWorkTime = shifts;
@@ -535,8 +535,8 @@ function addYearToDay(theDay) {
     var theDate = parseInt(_day[1]);
 
     // 年明け前に正月のシフト考えるような年明けを挟むときの処理
-    year = thisYear;
-    if (thisMonth >= 10 && _theMonth <= 2){
+    year = today.getFullYear();
+    if (today.getMonth() >= 10 && _theMonth <= 2){
         year ++;
     }
 
