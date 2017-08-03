@@ -864,6 +864,8 @@ function saveEdit(keyDay, keyTerm, x){
         $("#showTerm").innerHTML = '';
         saveData();
         showTerm(keyTerm);
+        sm = sm == 0 ? '00' : sm + ''; 
+        fm = fm == 0 ? '00' : fm + ''; 
         printSuccess('変更内容を保存しました。 {0}: {1} -> {2}'.format(keyDay, shiftStr, '{0}:{1}-{2}:{3}'.format(sh, sm, fh, fm)));
     }
 }
