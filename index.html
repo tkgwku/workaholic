@@ -24,13 +24,19 @@ you cannot:
             color: #000;
             cursor: pointer;
         }
+        .addEdit {
+            background-color: #f5f5f5;
+            border-radius: 5px;
+            border: 1px solid #eee;
+            padding-bottom: 1em;
+        }
         .delete{
             width: .8em;
         }
         .delete:hover{
             cursor: pointer;
         }
-        #showTerm{
+        #showTerm, #editWorktime{
             top: 10px;
             background-color: #fff;
             border: 1px solid #ccc;
@@ -39,21 +45,35 @@ you cannot:
             display: inline-block;
             margin-top: 1em;
         }
-        #termBack{
+        #editWorktime .input-group{
+            max-width: 300px;
+            margin:4px;
+        }
+        #termBack, #editBack{
             text-align: center;
-            position: absolute;
             top:0;
             left: 0;
             width: 100%;
             height: auto !important;
             min-height: 100%;
             display: none;
-            z-index: 10;
             background-color: rgba(255,255,255,.5);
             padding-bottom: 15em
         }
+        #termBack{
+            z-index: 10;
+            position: absolute;
+        }
+        #editBack{
+            z-index: 15;
+            position: fixed;
+        }
         .block {
             padding: 10px;
+            cursor: pointer;
+        }
+        .block:hover {
+            background-color: #eeeeee;
         }
         #shift_table div{
             margin: 3em 0;
@@ -67,7 +87,22 @@ you cannot:
             font-weight: bold;
         }
         #shift_table div p{
-            font-size: 2em
+            font-size: 2em;
+        }
+        #success, #error {
+            margin-top: 1em;
+            padding: 1em;
+        }
+        #addWorktime{
+            margin-bottom: 4em;
+        }
+        #addWorktime .input-group{
+            max-width: 300px;
+            margin:4px;
+            text-align: right;
+        }
+        .a{
+            max-width: 370px !important;
         }
     </style>
 </head>
@@ -77,18 +112,32 @@ you cannot:
         <div id="termBack">
             <div id="showTerm"></div>
         </div>
+        <div id="editBack">
+            <div id="editWorktime"></div>
+        </div>
         <h2>Workaholic v1.0</h2>
         <p>textareaにシフト表をコピペしてsubmit。submitしたときに、同時にデータをブラウザに保存します。</p>
         <textarea id="shift_textarea" rows="7" class="form-control" placeholder="シフト表を全選択してコピー&ペースト..."></textarea><br>
         <div>
-            <input class="btn btn-default" type="submit" value="Submit" id="shift_submit">
+            <button class="btn btn-default" type="submit" id="shift_submit">勤務時間を追加/上書き</button>
         </div>
+        <p id="success" style="display: none" class="bg-success text-success"></p>
+        <p id="error" style="display: none" class="bg-danger text-danger"></p>
         <!--insert table here...-->
         <div id="shift_table" style="margin: 3em 0;"></div>
-        <div class="checkbox" style="margin-bottom: 10em;">
+        <div id="addWorktime">
+            <button class="btn btn-primary" type="submit" id="add_submit">勤務時間を手動追加</button>
+        </div>
+        <div class="checkbox">
             <label>
                 <input type="checkbox" value="" id="delete_checkbox">
-                削除時に警告を表示しない
+                表のコラムの削除時に警告を表示しない
+            </label>
+        </div>
+        <div class="checkbox" style="margin-bottom: 5em;">
+            <label>
+                <input type="checkbox" value="" id="delete_day_checkbox">
+                勤務時間の削除時に警告を表示しない
             </label>
         </div>
         <div class="json">
@@ -105,7 +154,7 @@ you cannot:
             <br>
             <textarea id="json_input_textarea" rows="3" class="form-control" placeholder="データが消えたとき用、バックアップのjsonから読み込み..."></textarea><br>
             <div style="margin-bottom: 6em">
-                <input class="btn btn-default" type="submit" value="Submit" id="json_submit">
+                <button class="btn btn-default" type="submit" id="json_submit">Submit</button>
             </div>
         </div>
         <p>powered by <a href="http://getbootstrap.com/">bootstrap</a></p>
@@ -114,11 +163,15 @@ you cannot:
 </body>
 <script type="text/javascript">
 
+var hhmmformformat = '<div class="input-group"><div class="input-group-addon">開始時刻</div>{0}<div class="input-group-addon">時</div>{1}<div class="input-group-addon">分</div></div><div class="input-group"><div class="input-group-addon">終了時刻</div>{2}<div class="input-group-addon">時</div>{3}<div class="input-group-addon">分</div></div>';
+
 /*
  * 使用するlocalStorage
- *  - data              :  theYggdrasilをstring化したもの
- *  - json_checkbox     :  チェックボックスがcheckedであるなら1
- *  - delete_checkbox   :  同上
+ *  - data                  :  theYggdrasilをstring化したもの
+ *  - json_checkbox         :  チェックボックスがcheckedであるなら1
+ *  - delete_checkbox       :  同上
+ *  - delete_day_checkbox   :  同上
+ *  - bookmarked            :  ブックマークした日付
  */
 
 theYggdrasil = {};
@@ -137,6 +190,8 @@ theYggdrasil = {};
 // showingTerm === ($("#showTerm").display === 'none') -> true
 showingTerm = false;
 
+showingEdit = false;
+
 // 実行日のdate obj。 
 // 年月日だけわかればいいのでHTMLが読まれる段階で作成。
 today = new Date();
@@ -145,7 +200,7 @@ today = new Date();
  * チェックボックスの初期化とイベントハンドラ登録。
  */
 function initCheckboxAttr() {
-    var checkboxIds = ["json_checkbox", "delete_checkbox"];
+    var checkboxIds = ["json_checkbox", "delete_checkbox", "delete_day_checkbox"];
     for (var boxId of checkboxIds){
         var node = $("#" + boxId);
         var item = localStorage.getItem(boxId);
@@ -175,7 +230,17 @@ function bodyLoadEvent() {
         }
     };
 
+    $('#editBack').onclick = function(e){
+        if (showingEdit){
+            hideEdit();
+        }
+    };
+
     $('#showTerm').onclick = function(e){
+        e.stopPropagation();
+    };
+
+    $('#editWorktime').onclick = function(e){
         e.stopPropagation();
     };
 
@@ -187,6 +252,10 @@ function bodyLoadEvent() {
     $('#json_submit').onclick = function(){
         theYggdrasil = JSON.parse($('#json_input_textarea').value);
         saveData();
+    };
+
+    $('#add_submit').onclick = function(){
+        initAddWorktime();
     };
 
     var local_data = localStorage.getItem("data");
@@ -507,7 +576,17 @@ function showTerm(keyTerm) {
      *   ...
      * }
      */
-    for (var keyDay in _WorkingTree){
+    var keys = Object.keys(_WorkingTree);
+    keys.sort(function(a,b){
+        var _as = a.split("/"); 
+        var _bs = b.split("/");
+        if (_as.length === 1) return 1;
+        if (_bs.length === 1) return -1;
+        if (parseInt(_as[2]) > parseInt(_bs[2])) return 1;
+        if (parseInt(_as[2]) < parseInt(_bs[2])) return -1;
+        return 0;
+    });
+    for (var keyDay of keys){
         if (_WorkingTree.hasOwnProperty(keyDay)){
             // 今回は作成日時はいらない
             if (keyDay != "modified"){
@@ -523,14 +602,313 @@ function showTerm(keyTerm) {
                     alldaybonded += bonded;
                     alldayrest += getRestMin(bonded);
                 }
-                html += '<div class="block"><p><strong>{0}</strong></p><p>勤務時間: {1}</p><p>実働時間: {2}h</p></div>'
-                            .format(makeDateString(keyDay, '{0}/{1}/{2} ({3})'), makeWorktimeString(shifts), (alldaybonded-alldayrest)/60);
+                html += '<div class="block" onclick="edit(\'{3}\',\'{4}\')"><p><strong>{0}</strong></p><p>勤務時間: {1}</p><p>実働時間: {2}h</p></div>'.format(makeDateString(keyDay, '{0}/{1}/{2} ({3})'), makeWorktimeString(shifts), (alldaybonded-alldayrest)/60, keyDay, keyTerm);
             }
         }
     }
     $("#showTerm").innerHTML += html;
     $("#termBack").style.display = 'block';
     showingTerm = true;
+}
+
+function edit(keyDay, keyTerm){
+    var _WorkingTree = theYggdrasil[keyTerm];
+    var shifts = _WorkingTree[keyDay];
+
+    var html = '<h3>{0}の勤務時間の編集</h3>'.format(keyDay);
+
+    var hasel,hafsel,masel,mafsel;
+
+    for (var x = 0; x < shifts.length; x++) {
+        shift = shifts[x]
+        html += '<div style="margin-bottom:1em;">'
+        var hsel = '<select class="form-control" id="hsel">';
+        var hfsel = '<select class="form-control" id="hfsel">';
+        hasel = '<select class="form-control" id="hasel">';
+        hafsel = '<select class="form-control" id="hafsel">';
+        for (var i = 0; i < 24; i++){
+            var str = '<option>{0}</option>'.format(i);
+            var strSel = '<option selected>{0}</option>'.format(i);
+            if (shift["start"]["hour"] === i){
+                hsel += strSel;
+            } else {
+                hsel += str;
+            }
+            if (shift["finish"]["hour"] === i){
+                hfsel += strSel;
+            } else {
+                hfsel += str;
+            }
+            hasel += str;
+            hafsel += str;
+        }
+        hsel += '</select>';
+        hfsel += '</select>';
+        hasel += '</select>';
+        hafsel += '</select>';
+
+        var msel = '<select class="form-control" id="msel">';
+        var mfsel = '<select class="form-control" id="mfsel">';
+        masel = '<select class="form-control" id="masel">';
+        mafsel = '<select class="form-control" id="mafsel">';
+        for (var i = 0; i < 60; i += 15){
+            var j = i === 0 ? '00' : i+'';
+            var str = '<option>{0}</option>'.format(j);
+            var strSel = '<option selected>{0}</option>'.format(j);
+            if (shift["start"]["min"] === i){
+                msel += strSel;
+            } else {
+                msel += str;
+            }
+            if (shift["finish"]["min"] === i){
+                mfsel += strSel;
+            } else {
+                mfsel += str;
+            }
+            masel += str;
+            mafsel += str;
+        }
+        msel += '</select>';
+        mfsel += '</select>';
+        masel += '</select>';
+        mafsel += '</select>';
+
+        html += hhmmformformat.format(hsel, msel, hfsel, mfsel);
+        html += '<button class="btn btn-primary" type="submit" onclick="saveEdit(\'{0}\',\'{1}\', {2})">Save</button>'.format(keyDay, keyTerm, x);
+        html += '&nbsp;<button class="btn btn-danger" type="submit" onclick="removeEdit(\'{0}\',\'{1}\',{2})">Remove</button>'.format(keyDay, keyTerm, x);
+        html += '&nbsp;<button class="btn btn-default" type="submit" onclick="hideEdit()">Cancel</button>';
+        html += '</div>';
+    }
+    html += '&nbsp;<button class="btn btn-success" type="submit" onclick="toggleEdit(\'{0}\')">Add</button>'.format(keyDay);
+    html += '<div style="display:none" id="tog{0}" class="addEdit"><h4>勤務時間を追加</h4>'.format(keyDay);
+    html += hhmmformformat.format(hasel, masel, hafsel, mafsel);
+    html += '<button class="btn btn-primary" type="submit" onclick="addEdit(\'{0}\',\'{1}\')">勤務時間を追加</button>'.format(keyDay, keyTerm);
+    html += '</div>';
+    $("#editWorktime").innerHTML = html;
+    $("#editBack").style.display = 'block';
+    showingEdit = true;
+}
+
+function addWorktime(){
+    var year = $("#yearaw").selectedIndex + today.getFullYear() - 1;
+    var month = $("#monthaw").selectedIndex + 1;
+    var date = $("#dateaw").selectedIndex + 1;
+
+    if (monthday(year, month) < date){
+        printError('日付が存在しない日付です!');
+        return;
+    }
+
+    var sh = $("#asel").selectedIndex;
+    var sm = 15 * $("#aselz").selectedIndex;
+    var fh = $("#afsel").selectedIndex;
+    var fm = 15 * $("#afselz").selectedIndex;
+
+    var _postfix = date <= 15 ? '0' : '1';
+    var keyTerm = '{0}.{1}.{2}'.format(year, month, _postfix);
+    var keyDay = '{0}/{1}/{2}'.format(year, month, date);
+
+    var shiftStr = '';
+    if (theYggdrasil.hasOwnProperty(keyTerm)){
+        if (theYggdrasil[keyTerm].hasOwnProperty(keyDay)){
+            shiftStr = makeWorktimeString(theYggdrasil[keyTerm][keyDay]);
+            theYggdrasil[keyTerm][keyDay] = pushWorktime(theYggdrasil[keyTerm][keyDay], sh, sm, fh, fm);
+
+        } else {
+            theYggdrasil[keyTerm][keyDay] = pushWorktime([], sh, sm, fh, fm);
+        }
+    } else {
+        var _wobj = {}
+        _wobj[keyDay] = pushWorktime([], sh, sm, fh, fm);
+        theYggdrasil[keyTerm] = _wobj;
+    }
+    saveData();
+
+    var shiftStr2 = makeWorktimeString(theYggdrasil[keyTerm][keyDay]);
+
+    printSuccess('勤務時間を追加しました。 {0}: {1} -> {2}'.format(keyDay, shiftStr, shiftStr2));
+    //initAddWorktime();
+}
+
+function initAddWorktime(){
+    var year = today.getFullYear();
+    var month = today.getMonth() + 1;
+    var date = today.getDate();
+
+    var year_sel = '<select class="form-control" id="yearaw">';
+    year_sel += '<option>{0}</option>'.format(year - 1);
+    year_sel += '<option selected>{0}</option>'.format(year);
+    year_sel += '<option>{0}</option>'.format(year + 1);
+    year_sel += '</select>';
+
+    var month_sel = '<select class="form-control" id="monthaw">';
+    for (var i = 1;i < 13;i++){
+        if (i === month){
+            month_sel += '<option selected>{0}</option>'.format(i);
+        } else {
+            month_sel += '<option>{0}</option>'.format(i);
+        }
+    }
+    month_sel += '</select>';
+
+    var date_sel = '<select class="form-control" id="dateaw">';
+    for (var i = 1;i < 32; i++){
+        if (i === date){
+            date_sel += '<option selected>{0}</option>'.format(i);
+        } else {
+            date_sel += '<option>{0}</option>'.format(i);
+        }
+    }
+    date_sel += '</select>';
+
+    var asel = '<select class="form-control" id="asel">';
+    var afsel = '<select class="form-control" id="afsel">';
+    for (var i = 0; i < 24; i++){
+        if (i === 12){
+            asel += '<option selected>{0}</option>'.format(i);
+            afsel += '<option selected>{0}</option>'.format(i);
+        } else {
+            asel += '<option>{0}</option>'.format(i);
+            afsel += '<option>{0}</option>'.format(i);
+        }
+    }
+    asel += '</select>';
+    afsel += '</select>';
+
+    var aselz = '<select class="form-control" id="aselz">';
+    var afselz = '<select class="form-control" id="afselz">';
+    for (var i = 0; i < 60; i += 15){
+        var j = i === 0 ? '00' : i+'';
+        if (i === 0){
+            aselz += '<option selected>{0}</option>'.format(j);
+            afselz += '<option selected>{0}</option>'.format(j);
+        } else {
+            aselz += '<option>{0}</option>'.format(j);
+            afselz += '<option>{0}</option>'.format(j);
+        }
+    }
+    aselz += '</select>';
+    afselz += '</select>';
+
+    var html = '<h3>勤務時間の追加</h3><div class="input-group a">{0}<div class="input-group-addon">年</div>{1}<div class="input-group-addon">月</div>{2}<div class="input-group-addon">日</div></div>'.format(year_sel, month_sel, date_sel);
+    html += hhmmformformat.format(asel, aselz, afsel, afselz);
+    html += '<button class="btn btn-primary" type="submit" onclick="addWorktime()">Add</button> <button class="btn btn-default" type="submit" onclick="initAddWorktime()">Reset</button>';
+
+    $("#addWorktime").innerHTML = html;
+}
+
+function monthday(year, month){
+    var lastday = new Array('', 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31);
+    if ((year % 4 == 0 && year % 100 != 0) || year % 400 == 0){
+        lastday[2] = 29;
+    }
+    return lastday[month];
+}
+
+function addEdit(keyDay, keyTerm){
+    var sh = $("#hasel").selectedIndex;
+    var sm = 15 * $("#masel").selectedIndex;
+    var fh = $("#hafsel").selectedIndex;
+    var fm = 15 * $("#mafsel").selectedIndex;
+
+    var shiftStr = makeWorktimeString(theYggdrasil[keyTerm][keyDay]);
+
+    theYggdrasil[keyTerm][keyDay] = pushWorktime(theYggdrasil[keyTerm][keyDay], sh, sm, fh, fm);
+
+    hideEdit();
+    $("#showTerm").innerHTML = '';
+    saveData();
+    showTerm(keyTerm);
+
+    var shiftStr2 = makeWorktimeString(theYggdrasil[keyTerm][keyDay]);
+
+    printSuccess('勤務時間を追加しました。 {0}: {1} -> {2}'.format(keyDay, shiftStr, shiftStr2));
+}
+
+function toggleEdit(keyDay){
+    var str = $("#tog{0}".format(keyDay)).style.display;
+    if (str === 'none'){
+        $("#tog{0}".format(keyDay)).style.display = 'block';
+    } else {
+        $("#tog{0}".format(keyDay)).style.display = 'none';
+    }
+}
+
+function hideEdit(){
+    $("#editWorktime").innerHTML = '';
+    $("#editBack").style.display = 'none';
+    showingEdit = false;
+}
+
+function saveEdit(keyDay, keyTerm, x){
+    if (showingEdit){
+        var sh = $("#hsel").selectedIndex;
+        var sm = 15 * $("#msel").selectedIndex;
+        var fh = $("#hfsel").selectedIndex;
+        var fm = 15 * $("#mfsel").selectedIndex;
+
+        var shiftStr = makeWorktimeString([theYggdrasil[keyTerm][keyDay][x]]);
+
+        var newArray = [];
+        for (var i = theYggdrasil[keyTerm][keyDay].length - 1; i >= 0; i--) {
+            if (i != x){
+                newArray.push(theYggdrasil[keyTerm][keyDay][i]);
+            }
+        }
+
+        theYggdrasil[keyTerm][keyDay] = pushWorktime(newArray, sh, sm, fh, fm);
+
+        hideEdit();
+        $("#showTerm").innerHTML = '';
+        saveData();
+        showTerm(keyTerm);
+        printSuccess('変更内容を保存しました。 {0}: {1} -> {2}'.format(keyDay, shiftStr, '{0}:{1}-{2}:{3}'.format(sh, sm, fh, fm)));
+    }
+}
+
+function printSuccess(massage){
+    $("#success").innerHTML = massage + '<button type="button" class="close" aria-label="Close" onclick="vanishSuccess()"><span aria-hidden="true">&times;</span></button>';
+    $("#success").style.display = 'block';
+}
+
+function vanishSuccess(){
+    $("#success").style.display = 'none';
+    $("#success").innerHTML = '';
+}
+
+function printError(massage){
+    $("#error").innerHTML = massage + '<button type="button" class="close" aria-label="Close" onclick="vanishError()"><span aria-hidden="true">&times;</span></button>';
+    $("#error").style.display = 'block';
+}
+
+function vanishError(){
+    $("#error").style.display = 'none';
+    $("#error").innerHTML = '';
+}
+
+function removeEdit(keyDay, keyTerm, x){
+    var shiftStr = makeWorktimeString([theYggdrasil[keyTerm][keyDay][x]]);
+    if ($("#delete_day_checkbox").checked || window.confirm('本当に{0} {1}を削除しますか?'.format(keyDay, shiftStr))){
+        if (theYggdrasil[keyTerm][keyDay].length === 1){
+            delete theYggdrasil[keyTerm][keyDay];
+            if (Object.keys(theYggdrasil[keyTerm]).length == 1){
+                // modified のみになった場合
+                delete theYggdrasil[keyTerm];
+            }
+        } else {
+            var newArray = [];
+            for (var i = theYggdrasil[keyTerm][keyDay].length - 1; i >= 0; i--) {
+                if (i != x){
+                    newArray.push(theYggdrasil[keyTerm][keyDay][i]);
+                }
+            }
+            theYggdrasil[keyTerm][keyDay] = newArray;
+        }
+    }
+    hideEdit();
+    $("#showTerm").innerHTML = '';
+    saveData();
+    showTerm(keyTerm);
 }
 
 /*
