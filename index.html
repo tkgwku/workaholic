@@ -713,7 +713,6 @@ function addWorktime(){
         if (theYggdrasil[keyTerm].hasOwnProperty(keyDay)){
             shiftStr = makeWorktimeString(theYggdrasil[keyTerm][keyDay]);
             theYggdrasil[keyTerm][keyDay] = pushWorktime(theYggdrasil[keyTerm][keyDay], sh, sm, fh, fm);
-
         } else {
             theYggdrasil[keyTerm][keyDay] = pushWorktime([], sh, sm, fh, fm);
         }
@@ -722,6 +721,7 @@ function addWorktime(){
         _wobj[keyDay] = pushWorktime([], sh, sm, fh, fm);
         theYggdrasil[keyTerm] = _wobj;
     }
+    theYggdrasil[keyTerm]["modified"] = makeDateString(today, '{0}/{1}/{2}');
     saveData();
 
     var shiftStr2 = makeWorktimeString(theYggdrasil[keyTerm][keyDay]);
@@ -814,6 +814,8 @@ function addEdit(keyDay, keyTerm){
     var shiftStr = makeWorktimeString(theYggdrasil[keyTerm][keyDay]);
 
     theYggdrasil[keyTerm][keyDay] = pushWorktime(theYggdrasil[keyTerm][keyDay], sh, sm, fh, fm);
+
+    theYggdrasil[keyTerm]["modified"] = makeDateString(today, '{0}/{1}/{2}');
 
     hideEdit();
     $("#showTerm").innerHTML = '';
