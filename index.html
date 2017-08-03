@@ -76,7 +76,7 @@ you cannot:
             background-color: #eeeeee;
         }
         #shift_table div{
-            margin: 3em 0;
+            margin: 3em 0 1em;
             border: 1px solid #eeeeee;
             border-left: 5px solid #1b809e;
             border-radius: 2px;
@@ -88,6 +88,9 @@ you cannot:
         }
         #shift_table div p{
             font-size: 2em;
+        }
+        #shift_table .h4{
+            margin-bottom: 3em;
         }
         #success, #error {
             margin-top: 1em;
@@ -171,7 +174,6 @@ var hhmmformformat = '<div class="input-group"><div class="input-group-addon">�
  *  - json_checkbox         :  チェックボックスがcheckedであるなら1
  *  - delete_checkbox       :  同上
  *  - delete_day_checkbox   :  同上
- *  - bookmarked            :  ブックマークした日付
  */
 
 theYggdrasil = {};
@@ -193,9 +195,9 @@ showingTerm = false;
 showingEdit = false;
 
 // 実行日のdate obj。 
-// 年月日だけわかればいいのでHTMLが読まれる段階で作成。
+// 年月日だけわかればいい
 today = new Date();
-
+today = new Date(today.getFullYear(), today.getMonth(), today.getDate());
 /*
  * チェックボックスの初期化とイベントハンドラ登録。
  */
@@ -280,10 +282,10 @@ function pushWorktime(shifts, sh, sm, fh, fm){
     var _shifts = [];
     var merged = false;
     for (var shift of shifts){
-        if (timeEquals(shift["finish"], start)){
-             _shifts.push({"start": shift["start"], "finish": finish})
+        if (!merged && timeEquals(shift["finish"], start)){
+            _shifts.push({"start": shift["start"], "finish": finish})
             merged = true;
-        } else if (timeEquals(shift["start"], finish)){
+        } else if (!merged && timeEquals(shift["start"], finish)){
             _shifts.push({"start": start, "finish": shift["finish"]})
             merged = true;
         } else {
@@ -293,6 +295,17 @@ function pushWorktime(shifts, sh, sm, fh, fm){
     if (!merged){
         _shifts.push({"start": start, "finish": finish})
     }
+    _shifts.sort(function(a,b){
+        var a_h = a["start"]["hour"];
+        var a_m = a["start"]["min"];
+        var b_h = b["start"]["hour"];
+        var b_m = b["start"]["min"];
+        if (a_h > b_h) return 1; 
+        if (a_h < b_h) return -1; 
+        if (a_m > b_m) return 1; 
+        if (a_m < b_m) return -1; 
+        return 0;
+    });
     return _shifts;
 }
 
@@ -397,6 +410,9 @@ function buildTableContent() {
     var theNearestDate = null; // 次の勤務dayのdateobj
     var theNearestWorkTime = []; //次の勤務デイの勤務時間Array
 
+    var theSecNearestDate = null; // 次の勤務dayのdateobj
+    var theSecNearestWorkTime = []; //次の勤務デイの勤務時間Array
+
     var keys = Object.keys(theYggdrasil);
     // 並び替え (2017.8.0と2016.9.1など...)
     keys.sort(function(a,b){
@@ -453,9 +469,15 @@ function buildTableContent() {
                 var shifts = _WorkingTree[keyDay]; // Array<Object> [勤務時間Obj1, 勤務時間Obj2...]
 
                 var dateObj = new Date(keyDay); // Date("2017/8/1")
-                var _dtime = dateObj.getTime() - today.getTime(); // 今(ただしhtml読み込み時点の時間)との時間差ms
-                if (_dtime > 0 && (theNearestDate == null || _dtime < Math.abs(theNearestDate.getTime() - today.getTime()))){
+                dateObj.setHours(shifts[shifts.length-1]["finish"]["hour"]);
+                dateObj.setMinutes(shifts[shifts.length-1]["finish"]["min"]);
+                var _dtime = dateObj.getTime() - Date.now(); // 現在との時間差ms
+                if (_dtime >= 0 && (theNearestDate == null || _dtime < Math.abs(theNearestDate.getTime() - today.getTime()))){
                     // 今より勤務日程があとで、より現時点との時間的距離が近い。比較対象がない(=null)ならもうそれを採用だ。
+                    if (theNearestDate != null){
+                        theSecNearestDate = theNearestDate;
+                        theSecNearestWorkTime = theNearestWorkTime;
+                    }
                     theNearestDate = dateObj;
                     theNearestWorkTime = shifts;
                 }
@@ -472,9 +494,17 @@ function buildTableContent() {
     }
 
     tableHtml += '</table>'
+
+    var nextWorkHtml = '';
     if (theNearestDate != null) {
-        tableHtml = '<div><h4>次の出勤日:</h4><p>{0} {1}</p></div>'.format(makeDateString(theNearestDate, '{1}/{2} ({3})'), makeWorktimeString(theNearestWorkTime)) + tableHtml;
+        nextWorkHtml += '<div><h4>次の出勤日:</h4><p>{0} {1}</p></div>'.format(makeDateString(theNearestDate, '{1}/{2} ({3})'), makeWorktimeString(theNearestWorkTime));
     }
+    if (theSecNearestDate != null) {
+        nextWorkHtml += '<h4 class="h4">その次: {0} {1}</h4>'.format(makeDateString(theSecNearestDate, '{1}/{2} ({3})'), makeWorktimeString(theSecNearestWorkTime));
+    }
+
+    tableHtml = nextWorkHtml + tableHtml;
+
     $("#shift_table").innerHTML = tableHtml;
 }
 
