@@ -881,7 +881,9 @@ function isLargerOrEqualTo(time1, time2){
 }
 
 function compatible(wt1, wt2){
-    if (timeEquals(wt1["start"], wt2["start"]) || timeEquals(wt1["finish"], wt2["finish"])){
+    if (timeEquals(wt1["start"], wt1["finish"])){
+        return false;
+    } else if (timeEquals(wt1["start"], wt2["start"]) || timeEquals(wt1["finish"], wt2["finish"])){
         return false;
     } else if (isLargerThan(wt1["start"], wt2["start"])){
         return isLargerOrEqualTo(wt1["start"], wt2["finish"]);
