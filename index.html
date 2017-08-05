@@ -442,6 +442,8 @@ function buildTableContent() {
     var theSecNearestDate = null; // 次の勤務dayのdateobj
     var theSecNearestWorkTime = []; //次の勤務デイの勤務時間Array
 
+    var nowMs = Date.now();
+
     var keys = Object.keys(theYggdrasil);
     // 並び替え (2017.8.0と2016.9.1など...)
     keys.sort(function(a,b){
@@ -500,15 +502,20 @@ function buildTableContent() {
                 var dateObj = new Date(keyDay); // Date("2017/8/1")
                 dateObj.setHours(shifts[shifts.length-1]["start"]["hour"]);
                 dateObj.setMinutes(shifts[shifts.length-1]["start"]["min"]);
-                var _dtime = dateObj.getTime() - Date.now(); // 現在との時間差ms
-                if (_dtime >= 0 && (theNearestDate == null || _dtime < Math.abs(theNearestDate.getTime() - today.getTime()))){
-                    // 今より勤務日程があとで、より現時点との時間的距離が近い。比較対象がない(=null)ならもうそれを採用だ。
-                    if (theNearestDate != null){
-                        theSecNearestDate = theNearestDate;
-                        theSecNearestWorkTime = theNearestWorkTime;
+                var _dtime = dateObj.getTime() - nowMs; // 現在との時間差ms
+                if (_dtime >= 0){
+                    if (theNearestDate == null){
+                        theNearestDate = dateObj;
+                        theNearestWorkTime = shifts;
+                    } else {
+                        if (_dtime < Math.abs(theNearestDate.getTime() - nowMs)){
+                            theNearestDate = dateObj;
+                            theNearestWorkTime = shifts;
+                        } else if (theSecNearestDate == null || _dtime < Math.abs(theSecNearestDate.getTime() - nowMs)){
+                            theSecNearestDate = dateObj;
+                            theSecNearestWorkTime = shifts;
+                        }
                     }
-                    theNearestDate = dateObj;
-                    theNearestWorkTime = shifts;
                 }
 
                 for (var shift of shifts){
@@ -526,7 +533,8 @@ function buildTableContent() {
 
     var nextWorkHtml = '';
     if (theNearestDate != null) {
-        nextWorkHtml += '<div><h4>次の出勤日:</h4><p>{0} {1}</p></div>'.format(makeDateString(theNearestDate, '{1}/{2} ({3})'), makeWorktimeString(theNearestWorkTime));
+        var style = theSecNearestDate == null ? ' style="margin-bottom:3em"': '';
+        nextWorkHtml += '<div{0}><h4>次の出勤日:</h4><p>{1} {2}</p></div>'.format(style, makeDateString(theNearestDate, '{1}/{2} ({3})'), makeWorktimeString(theNearestWorkTime));
     }
     if (theSecNearestDate != null) {
         nextWorkHtml += '<h4 class="h4">その次: {0} {1}</h4>'.format(makeDateString(theSecNearestDate, '{1}/{2} ({3})'), makeWorktimeString(theSecNearestWorkTime));
@@ -765,14 +773,14 @@ function addWorktime(){
 
     var wtobj = {"start":{"hour":sh,"min":sm},"finish":{"hour":fh,"min":fm}};
     
+    var _postfix = date <= 15 ? '0' : '1';
+    var keyTerm = '{0}.{1}.{2}'.format(year, month, _postfix);
+    var keyDay = '{0}/{1}/{2}'.format(year, month, date);
+
     if (!canAdd(keyTerm, keyDay, wtobj)){
         printError('勤務時間が不正確または競合 ({0} {1})'.format(keyDay, makeWorktimeString([wtobj])));
         return;
     }
-
-    var _postfix = date <= 15 ? '0' : '1';
-    var keyTerm = '{0}.{1}.{2}'.format(year, month, _postfix);
-    var keyDay = '{0}/{1}/{2}'.format(year, month, date);
 
     var shiftStr = '';
     if (theYggdrasil.hasOwnProperty(keyTerm)){
@@ -883,9 +891,7 @@ function isLargerOrEqualTo(time1, time2){
 }
 
 function compatible(wt1, wt2){
-    if (timeEquals(wt1["start"], wt1["finish"])){
-        return false;
-    } else if (timeEquals(wt1["start"], wt2["start"]) || timeEquals(wt1["finish"], wt2["finish"])){
+    if (timeEquals(wt1["start"], wt2["start"]) || timeEquals(wt1["finish"], wt2["finish"])){
         return false;
     } else if (isLargerThan(wt1["start"], wt2["start"])){
         return isLargerOrEqualTo(wt1["start"], wt2["finish"]);
@@ -899,6 +905,12 @@ function canAdd(keyTerm, keyDay, wtobj){
 }
 
 function canSave(keyTerm, keyDay, wtobj, exclude){
+    if (timeEquals(wtobj["start"], wtobj["finish"])){
+        return false;
+    }
+    if (!theYggdrasil.hasOwnProperty(keyTerm) || !theYggdrasil[keyTerm].hasOwnProperty(keyDay)){
+        return true;
+    }
     var ar = theYggdrasil[keyTerm][keyDay];
     for (var i = 0; i < ar.length; i++){
         if (i === exclude) continue;
