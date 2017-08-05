@@ -118,7 +118,7 @@ you cannot:
         <div id="editBack">
             <div id="editWorktime"></div>
         </div>
-        <h2>Workaholic v1.0</h2>
+        <h2>Workaholic v1.1</h2>
         <p>textareaにシフト表をコピペしてsubmit。submitしたときに、同時にデータをブラウザに保存します。</p>
         <textarea id="shift_textarea" rows="7" class="form-control" placeholder="シフト表を全選択してコピー&ペースト..."></textarea><br>
         <div>
@@ -137,10 +137,16 @@ you cannot:
                 表のコラムの削除時に警告を表示しない
             </label>
         </div>
-        <div class="checkbox" style="margin-bottom: 5em;">
+        <div class="checkbox">
             <label>
                 <input type="checkbox" value="" id="delete_day_checkbox">
                 勤務時間の削除時に警告を表示しない
+            </label>
+        </div>
+        <div class="checkbox" style="margin-bottom: 5em;">
+            <label>
+                <input type="checkbox" value="" id="reset_checkbox" checked>
+                追加後リセット
             </label>
         </div>
         <div class="json">
@@ -202,7 +208,7 @@ today = new Date(today.getFullYear(), today.getMonth(), today.getDate());
  * チェックボックスの初期化とイベントハンドラ登録。
  */
 function initCheckboxAttr() {
-    var checkboxIds = ["json_checkbox", "delete_checkbox", "delete_day_checkbox"];
+    var checkboxIds = ["json_checkbox", "delete_checkbox", "delete_day_checkbox", "reset_checkbox"];
     for (var boxId of checkboxIds){
         var node = $("#" + boxId);
         var item = localStorage.getItem(boxId);
@@ -279,10 +285,18 @@ function bodyLoadEvent() {
 function pushWorktime(shifts, sh, sm, fh, fm){
     var start = {"hour": sh, "min": sm};
     var finish = {"hour": fh, "min": fm};
+    var _obj = {"start": start, "finish": finish};
+    var count = 0;
     var _shifts = [];
     var merged = false;
+
     for (var shift of shifts){
-        if (!merged && timeEquals(shift["finish"], start)){
+        if (!compatible(shift, _obj)){
+            count++;
+            printError('勤務時間が不正確です。({0}個の項目)'.format(count))
+            merged = true;
+            _shifts.push(shift);
+        } else if (!merged && timeEquals(shift["finish"], start)){
             _shifts.push({"start": shift["start"], "finish": finish})
             merged = true;
         } else if (!merged && timeEquals(shift["start"], finish)){
@@ -307,6 +321,18 @@ function pushWorktime(shifts, sh, sm, fh, fm){
         return 0;
     });
     return _shifts;
+}
+
+function larger(time1, time2){
+    if (time1["hour"] > time2["hour"]){
+        return time1;
+    } else if (time1["hour"] < time2["hour"]){
+        return time2;
+    } else if (time1["min"] > time2["min"]){
+        return time1;
+    } else {
+        return time2;
+    }
 }
 
 /*
@@ -366,7 +392,15 @@ function extractData(){
 
         if (timeMatch != null){
             //この行が11:30-20:15とか書いてある行
-            theWorktime = pushWorktime(theWorktime, parseInt(timeMatch[1]), parseInt(timeMatch[2]), parseInt(timeMatch[3]), parseInt(timeMatch[4]));
+            var sh = parseInt(timeMatch[1]);
+            var sm = parseInt(timeMatch[2]);
+            var fh = parseInt(timeMatch[3]);
+            var fm = parseInt(timeMatch[4]);
+
+            if (fh < sh || (fh === sh && fm < sm)){
+                fh += 24;
+            }
+            theWorktime = pushWorktime(theWorktime, sh, sm, fh, fm);
         }
     }
     ///////////end: lineごとの処理///////////
@@ -469,8 +503,8 @@ function buildTableContent() {
                 var shifts = _WorkingTree[keyDay]; // Array<Object> [勤務時間Obj1, 勤務時間Obj2...]
 
                 var dateObj = new Date(keyDay); // Date("2017/8/1")
-                dateObj.setHours(shifts[shifts.length-1]["finish"]["hour"]);
-                dateObj.setMinutes(shifts[shifts.length-1]["finish"]["min"]);
+                dateObj.setHours(shifts[shifts.length-1]["start"]["hour"]);
+                dateObj.setMinutes(shifts[shifts.length-1]["start"]["min"]);
                 var _dtime = dateObj.getTime() - Date.now(); // 現在との時間差ms
                 if (_dtime >= 0 && (theNearestDate == null || _dtime < Math.abs(theNearestDate.getTime() - today.getTime()))){
                     // 今より勤務日程があとで、より現時点との時間的距離が近い。比較対象がない(=null)ならもうそれを採用だ。
@@ -656,7 +690,7 @@ function edit(keyDay, keyTerm){
         var hfsel = '<select class="form-control" id="hfsel">';
         hasel = '<select class="form-control" id="hasel">';
         hafsel = '<select class="form-control" id="hafsel">';
-        for (var i = 0; i < 24; i++){
+        for (var i = 0; i < 31; i++){
             var str = '<option>{0}</option>'.format(i);
             var strSel = '<option selected>{0}</option>'.format(i);
             if (shift["start"]["hour"] === i){
@@ -757,7 +791,10 @@ function addWorktime(){
     var shiftStr2 = makeWorktimeString(theYggdrasil[keyTerm][keyDay]);
 
     printSuccess('勤務時間を追加しました。 {0}: {1} -> {2}'.format(keyDay, shiftStr, shiftStr2));
-    //initAddWorktime();
+
+    if ($("#reset_checkbox").checked){
+        initAddWorktime();
+    }
 }
 
 function initAddWorktime(){
@@ -793,7 +830,7 @@ function initAddWorktime(){
 
     var asel = '<select class="form-control" id="asel">';
     var afsel = '<select class="form-control" id="afsel">';
-    for (var i = 0; i < 24; i++){
+    for (var i = 0; i < 31; i++){
         if (i === 12){
             asel += '<option selected>{0}</option>'.format(i);
             afsel += '<option selected>{0}</option>'.format(i);
@@ -833,6 +870,24 @@ function monthday(year, month){
         lastday[2] = 29;
     }
     return lastday[month];
+}
+
+function isLargerThan(time1, time2){
+    return time1["hour"] > time2["hour"] || (time1["hour"] === time2["hour"] && time1["min"] > time2["min"]);
+}
+
+function isLargerOrEqualTo(time1, time2){
+    return isLargerThan(time1, time2) || timeEquals(time1, time2);
+}
+
+function compatible(wt1, wt2){
+    if (timeEquals(wt1["start"], wt2["start"]) || timeEquals(wt1["finish"], wt2["finish"])){
+        return false;
+    } else if (isLargerThan(wt1["start"], wt2["start"])){
+        return isLargerOrEqualTo(wt1["start"], wt2["finish"]);
+    } else {
+        return isLargerOrEqualTo(wt2["start"], wt1["finish"]);
+    }
 }
 
 function addEdit(keyDay, keyTerm){
@@ -1002,10 +1057,6 @@ function getBondedMinute(worktimeObj){
     var startM = _st["min"];
     var finishH = _fn["hour"];
     var finishM = _fn["min"];
-
-    if (finishH < startH || (finishH == startH && finishM < startM)){
-        finishH += 24;
-    }
 
     return (finishH - startH) * 60 + (finishM - startM);
 }
