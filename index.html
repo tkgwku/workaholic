@@ -291,12 +291,7 @@ function pushWorktime(shifts, sh, sm, fh, fm){
     var merged = false;
 
     for (var shift of shifts){
-        if (!compatible(shift, _obj)){
-            count++;
-            printError('勤務時間が不正確です。({0}個の項目)'.format(count))
-            merged = true;
-            _shifts.push(shift);
-        } else if (!merged && timeEquals(shift["finish"], start)){
+        if (!merged && timeEquals(shift["finish"], start)){
             _shifts.push({"start": shift["start"], "finish": finish})
             merged = true;
         } else if (!merged && timeEquals(shift["start"], finish)){
@@ -768,6 +763,13 @@ function addWorktime(){
     var fh = $("#afsel").selectedIndex;
     var fm = 15 * $("#afselz").selectedIndex;
 
+    var wtobj = {"start":{"hour":sh,"min":sm},"finish":{"hour":fh,"min":fm}};
+    
+    if (!canAdd(keyTerm, keyDay, wtobj)){
+        printError('勤務時間が不正確または競合 ({0} {1})'.format(keyDay, makeWorktimeString([wtobj])));
+        return;
+    }
+
     var _postfix = date <= 15 ? '0' : '1';
     var keyTerm = '{0}.{1}.{2}'.format(year, month, _postfix);
     var keyDay = '{0}/{1}/{2}'.format(year, month, date);
@@ -892,11 +894,33 @@ function compatible(wt1, wt2){
     }
 }
 
+function canAdd(keyTerm, keyDay, wtobj){
+    return canSave(keyTerm, keyDay, wtobj, -1);
+}
+
+function canSave(keyTerm, keyDay, wtobj, exclude){
+    var ar = theYggdrasil[keyTerm][keyDay];
+    for (var i = 0; i < ar.length; i++){
+        if (i === exclude) continue;
+        if (!compatible(ar[i], wtobj)){
+            return false;
+        }
+    }
+    return true;
+}
+
 function addEdit(keyDay, keyTerm){
     var sh = $("#hasel").selectedIndex;
     var sm = 15 * $("#masel").selectedIndex;
     var fh = $("#hafsel").selectedIndex;
     var fm = 15 * $("#mafsel").selectedIndex;
+
+    var wtobj = {"start":{"hour":sh,"min":sm},"finish":{"hour":fh,"min":fm}};
+
+    if (!canAdd(keyTerm, keyDay, wtobj)){
+        printError('勤務時間が不正確または競合 ({0} {1})'.format(keyDay, makeWorktimeString([wtobj])));
+        return;
+    }
 
     var shiftStr = makeWorktimeString(theYggdrasil[keyTerm][keyDay]);
 
@@ -935,6 +959,13 @@ function saveEdit(keyDay, keyTerm, x){
         var sm = 15 * $("#msel").selectedIndex;
         var fh = $("#hfsel").selectedIndex;
         var fm = 15 * $("#mfsel").selectedIndex;
+
+        var wtobj = {"start":{"hour":sh,"min":sm},"finish":{"hour":fh,"min":fm}};
+
+        if (!canSave(keyTerm, keyDay, wtobj, x)){
+            printError('勤務時間が不正確または競合 ({0} {1})'.format(keyDay, makeWorktimeString([wtobj])));
+            return;
+        }
 
         var shiftStr = makeWorktimeString([theYggdrasil[keyTerm][keyDay][x]]);
 
