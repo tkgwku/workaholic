@@ -328,6 +328,7 @@ function initTextboxAttr(){
         }
         localStorage.setItem("display_sel", $("#display_sel").selectedIndex);
         buildTableContent();
+        printSuccess('経路設定を保存しました。')
     }
 }
 
@@ -698,7 +699,7 @@ function makeYahooTransitURL(date){
     var sigma = [0, 2, 1];
     u += '&s=' + sigma[$("#display_sel").selectedIndex];
     u += '&expkind=1';
-    u += '&ws=1';
+    u += '&ws=3'; //少しゆっくり
     u += '&kw=';
     var match_from = $("#yturl").value.match(/from=([%A-Z1-9]+)/);
     var match_to = $("#yturl").value.match(/to=([%A-Z1-9]+)/);
