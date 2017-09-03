@@ -674,7 +674,7 @@ function makeYahooTransitURL(date){
     u += '&kw=';
     var match_from = $("#yturl").value.match(/from=([%A-Z1-9]+)/);
     var match_to = $("#yturl").value.match(/to=([%A-Z1-9]+)/);
-    if (match_from[1] === frominput && match_to[1] === toinput){
+    if (match_from != null && match_to != null && match_from[1] === frominput && match_to[1] === toinput){
         var match_mtf = $("#yturl").value.match(/mtf=(\d+)/);
         if (match_mtf != null){
             u += '&mtf=' + match_mtf[1];
