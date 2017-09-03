@@ -97,7 +97,7 @@ you cannot:
             padding: 1em;
         }
         #addWorktime{
-            margin-bottom: 4em;
+            margin-bottom: 3em;
         }
         #addWorktime .input-group{
             max-width: 300px;
@@ -131,24 +131,77 @@ you cannot:
         <div id="addWorktime">
             <button class="btn btn-primary" type="submit" id="add_submit">勤務時間を手動追加</button>
         </div>
-        <div class="checkbox">
-            <label>
-                <input type="checkbox" value="" id="delete_checkbox">
-                表のコラムの削除時に警告を表示しない
-            </label>
+
+        <div>
+            勤務時間の
+            <input type="text" id="yttime" size="1" placeholder="例: 30">分前に
+            <input type="text" id="ytfrom" size="10" placeholder="例: 学研北生駒">から
+            <input type="text" id="ytto" size="10" placeholder="例: 大正">に、
+            <input type="text" id="ytvia" size="10" placeholder="例: 谷町四丁目">経由で<small style="color: #777">(経由は任意、コンマ','で区切って3つまで複数追加)</small>
+            到着する経路を検索
+            <div class="checkbox">
+                <strong>交通手段</strong> 
+                <label>
+                    <input type="checkbox" value="" id="al_checkbox">
+                    空路
+                </label>
+                <label>
+                    <input type="checkbox" value="" id="shin_checkbox">
+                    新幹線
+                </label>
+                <label>
+                    <input type="checkbox" value="" id="ex_checkbox">
+                    有料特急
+                </label>
+                <label>
+                    <input type="checkbox" value="" id="hb_checkbox">
+                    高速バス
+                </label>
+                <label>
+                    <input type="checkbox" value="" id="lb_checkbox" checked="">
+                    路線/連絡バス
+                </label>
+                <label>
+                    <input type="checkbox" value="" id="sr_checkbox">
+                    フェリー
+                </label>
+            </div>
+            <strong>表示順序</strong> 
+            <select id="display_sel">
+                <option selected="">到着が早い順</option>
+                <option>乗り換え回数順</option>
+                <option>料金が安い順</option>
+            </select>
+            <p class="checkbox">経路のURLを使用して、経路を限定する <input type="text" size="60" placeholder="URLを貼り付け..." id="yturl"></p>
+            <p class="checkbox"><button id="saveTransit">経路を保存</button></p>
         </div>
-        <div class="checkbox">
-            <label>
-                <input type="checkbox" value="" id="delete_day_checkbox">
-                勤務時間の削除時に警告を表示しない
-            </label>
+
+        <div style="margin-bottom: 5em;margin-top: 3em;">
+            <div class="checkbox">
+                <label>
+                    <input type="checkbox" value="" id="delete_checkbox">
+                    表のコラムの削除時に警告を表示しない
+                </label>
+            </div>
+            <div class="checkbox">
+                <label>
+                    <input type="checkbox" value="" id="delete_day_checkbox">
+                    勤務時間の削除時に警告を表示しない
+                </label>
+            </div>
+            <div class="checkbox">
+                <label>
+                    <input type="checkbox" value="" id="reset_checkbox" checked>
+                    追加後リセット
+                </label>
+            </div>
+            <div style="margin-top: 4em">
+                <p><strong>経路を限定するためのURLについて</strong></p>
+                <p>目的地まで行くのに複数の経路があって、ある一つの経路だけを表示したい場合に、下記の方法でURLをコピーし貼り付ければ、そのルートだけを表示できます。</p>
+                <div><a href="src/urlusage.jpg"><img src="src/urlusage.jpg" alt="urlusage.jpg" class="img-thumbnail" style="max-width:600px;"></a></div>
+            </div>
         </div>
-        <div class="checkbox" style="margin-bottom: 5em;">
-            <label>
-                <input type="checkbox" value="" id="reset_checkbox" checked>
-                追加後リセット
-            </label>
-        </div>
+
         <div class="json">
             <h4>バックアップ用</h4>
             <p>下のtextareaには上のデータがjson形式で表示されます。これをどこかのファイルで保存・共有しておくと、ブラウザが変わったりデバイスが変わってもデータを引き継ぐことができます。</p>
@@ -208,14 +261,16 @@ today = new Date(today.getFullYear(), today.getMonth(), today.getDate());
  * チェックボックスの初期化とイベントハンドラ登録。
  */
 function initCheckboxAttr() {
-    var checkboxIds = ["json_checkbox", "delete_checkbox", "delete_day_checkbox", "reset_checkbox"];
+    var checkboxIds = ["json_checkbox", "delete_checkbox", "delete_day_checkbox", "reset_checkbox", "al_checkbox", "shin_checkbox", "ex_checkbox", "hb_checkbox", "lb_checkbox", "sr_checkbox"];
     for (var boxId of checkboxIds){
         var node = $("#" + boxId);
         var item = localStorage.getItem(boxId);
-        if (item === "1"){
-            node.checked = true;
-        } else {
-            node.checked = false;
+        if (item != null){
+            if (item === "1"){
+                node.checked = true;
+            } else {
+                node.checked = false;
+            }
         }
         // register onchange event handler
         // チェックボックスの値が変化するたびに、チェックボックスをチェックしてデータをlocalStorageに格納。
@@ -226,11 +281,34 @@ function initCheckboxAttr() {
     }
 }
 
+function initTextboxAttr(){
+    var ids = ["yttime", "ytfrom", "ytto", "ytvia", "yturl"];
+    for (var boxId of ids){
+        var node = $("#" + boxId);
+        var item = localStorage.getItem(boxId);
+        if (item != null && item != ""){
+            node.value = item;
+        }
+    }
+    var item2 = localStorage.getItem("display_sel");
+    if (item != null && item != ""){
+        $("#display_sel").selectedIndex = parseInt(item2);
+    }
+    $("#saveTransit").onclick = function(e){
+        for (var boxId of ids){
+            localStorage.setItem(boxId, $("#" + boxId).value)
+        }
+        localStorage.setItem("display_sel", $("#display_sel").selectedIndex);
+        buildTableContent();
+    }
+}
+
 /*
  * bodyが読み込まれたときに発火する関数。
  */
 function bodyLoadEvent() {
     initCheckboxAttr();
+    initTextboxAttr();
 
     $('#termBack').onclick = function(e){
         if (showingTerm){
@@ -534,15 +612,75 @@ function buildTableContent() {
     var nextWorkHtml = '';
     if (theNearestDate != null) {
         var style = theSecNearestDate == null ? ' style="margin-bottom:3em"': '';
-        nextWorkHtml += '<div{0}><h4>次の出勤日:</h4><p>{1} {2}</p></div>'.format(style, makeDateString(theNearestDate, '{1}/{2} ({3})'), makeWorktimeString(theNearestWorkTime));
+        var transit = makeYahooTransitURL(theNearestDate);
+        var transithtml = '';
+        if (transit != ''){
+            transithtml = '<a href="{0}" target="_new">Yahoo 路線で出勤経路を検索</a>'.format(transit);
+        }
+        nextWorkHtml += '<div{0}><h4>次の出勤日:</h4><p>{1} {2}</p>{3}</div>'.format(style, makeDateString(theNearestDate, '{1}/{2} ({3})'), makeWorktimeString(theNearestWorkTime), transithtml);
     }
     if (theSecNearestDate != null) {
-        nextWorkHtml += '<h4 class="h4">その次: {0} {1}</h4>'.format(makeDateString(theSecNearestDate, '{1}/{2} ({3})'), makeWorktimeString(theSecNearestWorkTime));
+        var transit = makeYahooTransitURL(theSecNearestDate);
+        var transithtml = '';
+        if (transit != ''){
+            transithtml = '<small><a href="{0}" target="_new">Yahoo 路線で出勤経路を検索</a></small>'.format(transit);
+        }
+        nextWorkHtml += '<h4 class="h4">その次: {0} {1} {2}</h4>'.format(makeDateString(theSecNearestDate, '{1}/{2} ({3})'), makeWorktimeString(theSecNearestWorkTime), transithtml);
     }
 
     tableHtml = nextWorkHtml + tableHtml;
 
     $("#shift_table").innerHTML = tableHtml;
+}
+
+function makeYahooTransitURL(date){
+    var timeinput = parseInt($("#yttime").value);
+    if (isNaN(timeinput))　return '';
+    var frominput = encodeURI($("#ytfrom").value);
+    if (frominput === '') return '';
+    var toinput = encodeURI($("#ytto").value);
+    if (toinput === '') return '';
+    var date = new Date(date.getTime() - timeinput * 60 * 1000)
+    var u = 'https://transit.yahoo.co.jp/search/result';
+    u += '?flatlon=';
+    u += '&from=' + encodeURI($("#ytfrom").value);
+    u += '&tlatlon=';
+    u += '&to=' + encodeURI($("#ytto").value);
+    var viainputs = $("#ytvia").value.split(",")
+    if (viainputs.length >= 1) u += '&via=' + encodeURI(viainputs[0]);
+    if (viainputs.length === 2) u += '&via=' + encodeURI(viainputs[1]);
+    if (viainputs.length === 3) u += '&via=' + encodeURI(viainputs[2]);
+    u += '&y=' + date.getFullYear();
+    var suff = date.getMonth() < 9 ? '0' : '';
+    u += '&m=' + suff + (date.getMonth() + 1);
+    var suff2 = date.getDate() < 10 ? '0' : '';
+    u += '&d=' + suff2 + date.getDate();
+    u += '&hh=' + date.getHours();
+    var minutes = date.getMinutes() + '';
+    u += '&m2=' + minutes.charAt(1);
+    u += '&m1=' + minutes.charAt(0);
+    u += '&type=4'; // 到着時刻設定
+    u += '&ticket=ic';
+    if ($("#al_checkbox").checked) u += '&al=1';
+    if ($("#shin_checkbox").checked) u += '&shin=1';
+    if ($("#ex_checkbox").checked) u += '&ex=1';
+    if ($("vhb_checkbox").checked) u += '&hb=1';
+    if ($("#lb_checkbox").checked) u += '&lb=1';
+    if ($("#sr_checkbox").checked) u += '&sr=1';
+    var sigma = [0, 2, 1];
+    u += '&s=' + sigma[$("#display_sel").selectedIndex];
+    u += '&expkind=1';
+    u += '&ws=1';
+    u += '&kw=';
+    var match_from = $("#yturl").value.match(/from=([%A-Z1-9]+)/);
+    var match_to = $("#yturl").value.match(/to=([%A-Z1-9]+)/);
+    if (match_from[1] === frominput && match_to[1] === toinput){
+        var match_mtf = $("#yturl").value.match(/mtf=(\d+)/);
+        if (match_mtf != null){
+            u += '&mtf=' + match_mtf[1];
+        }
+    }
+    return u;
 }
 
 /*
