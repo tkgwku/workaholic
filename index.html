@@ -107,6 +107,10 @@ you cannot:
         .a{
             max-width: 370px !important;
         }
+        del {
+            color: #777;
+            font-style: italic;
+        }
     </style>
 </head>
 
@@ -118,7 +122,7 @@ you cannot:
         <div id="editBack">
             <div id="editWorktime"></div>
         </div>
-        <h2>Workaholic v1.1</h2>
+        <h2>Workaholic v1.2.1</h2>
         <p>textareaにシフト表をコピペしてsubmit。submitしたときに、同時にデータをブラウザに保存します。</p>
         <textarea id="shift_textarea" rows="7" class="form-control" placeholder="シフト表を全選択してコピー&ペースト..."></textarea><br>
         <div>
@@ -190,12 +194,14 @@ you cannot:
                     </div>
                 </td>
             </tr>
+            <!--
             <tr>
                 <th>経路URL</th>
                 <td>
-                    <div class="form-inline">経路のURLを使用して、経路を限定する <input type="text" placeholder="URLを貼り付け..." id="yturl" class="form-control" size="45"></div>
+                    <div class="form-inline">経路のURLを使用して、経路を限定する <input type="text" placeholder="URLを貼り付け..." id="yturl" class="form-control disabled" size="45" disabled=""></div>
                 </td>
             </tr>
+            -->
             <tr>
                 <td>
                     <button id="saveTransit" type="button" class="btn btn-primary">経路を保存</button>
@@ -223,11 +229,13 @@ you cannot:
                     追加後リセット
                 </label>
             </div>
+            <!--
             <div style="margin-top: 4em">
                 <p><strong>経路を限定するためのURLについて</strong></p>
                 <p>目的地まで行くのに複数の経路があって、ある一つの経路だけを表示したい場合に、下記の方法でURLをコピーし貼り付ければ、そのルートだけを表示できます。</p>
                 <div><a href="src/urlusage.jpg"><img src="src/urlusage.jpg" alt="urlusage.jpg" class="img-thumbnail" style="width:100%;max-width:600px;"></a></div>
             </div>
+            -->
         </div>
 
         <div class="json">
@@ -310,7 +318,7 @@ function initCheckboxAttr() {
 }
 
 function initTextboxAttr(){
-    var ids = ["yttime", "ytfrom", "ytto", "ytvia", "yturl"];
+    var ids = ["yttime", "ytfrom", "ytto", "ytvia"];
     for (var boxId of ids){
         var node = $("#" + boxId);
         var item = localStorage.getItem(boxId);
@@ -701,6 +709,7 @@ function makeYahooTransitURL(date){
     u += '&expkind=1';
     u += '&ws=3'; //少しゆっくり
     u += '&kw=';
+    /*
     var match_from = $("#yturl").value.match(/from=([%A-Z1-9]+)/);
     var match_to = $("#yturl").value.match(/to=([%A-Z1-9]+)/);
     if (match_from != null && match_to != null && match_from[1] === frominput && match_to[1] === toinput){
@@ -708,7 +717,7 @@ function makeYahooTransitURL(date){
         if (match_mtf != null){
             u += '&mtf=' + match_mtf[1];
         }
-    }
+    }*/
     return u;
 }
 
