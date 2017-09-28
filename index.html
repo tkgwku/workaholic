@@ -3,7 +3,6 @@
 <!--
 made by yudai takegawa
 (c) 2017 all rights reserved
-
 you can:
  - distribute
  - modify
@@ -89,9 +88,6 @@ you cannot:
         #shift_table div p{
             font-size: 2em;
         }
-        #shift_table .h4{
-            margin-bottom: 3em;
-        }
         #success, #error {
             margin-top: 1em;
             padding: 1em;
@@ -146,8 +142,7 @@ you cannot:
                         <input type="text" id="yttime" placeholder="例: 30" class="form-control" size="2">分前に
                         <input type="text" id="ytfrom" placeholder="例: 学研北生駒" class="form-control" size="10">から
                         <input type="text" id="ytto" placeholder="例: 大正" value="桜島" class="form-control" size="10">に
-                        <input type="text" id="ytvia" placeholder="例: 谷町四丁目" class="form-control" size="10">経由で<small style="color: #777">(経由は任意、コンマ','で区切って3つまで複数追加)</small>
-                        到着する経路を検索
+                        <input type="text" id="ytvia" placeholder="例: 谷町四丁目" class="form-control" size="10">経由で到着する経路を検索 <small style="color: #777">(経由は任意、コンマ','で区切って3つまで複数追加)</small>
                     </div>
                 </td>
             </tr>
@@ -258,11 +253,10 @@ you cannot:
         <p>powered by <a href="http://getbootstrap.com/">bootstrap</a></p>
     </div> <!-- /container -->
 
+<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
 </body>
 <script type="text/javascript">
-
 var hhmmformformat = '<div class="input-group"><div class="input-group-addon">開始時刻</div>{0}<div class="input-group-addon">時</div>{1}<div class="input-group-addon">分</div></div><div class="input-group"><div class="input-group-addon">終了時刻</div>{2}<div class="input-group-addon">時</div>{3}<div class="input-group-addon">分</div></div>';
-
 /*
  * 使用するlocalStorage
  *  - data                  :  theYggdrasilをstring化したもの
@@ -270,7 +264,6 @@ var hhmmformformat = '<div class="input-group"><div class="input-group-addon">�
  *  - delete_checkbox       :  同上
  *  - delete_day_checkbox   :  同上
  */
-
 theYggdrasil = {};
 /*
  * theYggdrasil(全部のデータを格納するobj)の構造は
@@ -282,13 +275,10 @@ theYggdrasil = {};
  *   - ...
  * }
  */
-
 // 半月の勤務履歴を開いているか否か。
-// showingTerm === ($("#showTerm").display === 'none') -> true
+// showingTerm === ($2("#showTerm").display === 'none') -> true
 showingTerm = false;
-
 showingEdit = false;
-
 // 実行日のdate obj。 
 // 年月日だけわかればいい
 today = new Date();
@@ -299,7 +289,7 @@ today = new Date(today.getFullYear(), today.getMonth(), today.getDate());
 function initCheckboxAttr() {
     var checkboxIds = ["json_checkbox", "delete_checkbox", "delete_day_checkbox", "reset_checkbox", "al_checkbox", "shin_checkbox", "ex_checkbox", "hb_checkbox", "lb_checkbox", "sr_checkbox"];
     for (var boxId of checkboxIds){
-        var node = $("#" + boxId);
+        var node = $2("#" + boxId);
         var item = localStorage.getItem(boxId);
         if (item != null){
             if (item === "1"){
@@ -316,11 +306,10 @@ function initCheckboxAttr() {
         }
     }
 }
-
 function initTextboxAttr(){
     var ids = ["yttime", "ytfrom", "ytto", "ytvia"];
     for (var boxId of ids){
-        var node = $("#" + boxId);
+        var node = $2("#" + boxId);
         var item = localStorage.getItem(boxId);
         if (item != null && item != ""){
             node.value = item;
@@ -328,71 +317,61 @@ function initTextboxAttr(){
     }
     var item2 = localStorage.getItem("display_sel");
     if (item != null && item != ""){
-        $("#display_sel").selectedIndex = parseInt(item2);
+        $2("#display_sel").selectedIndex = parseInt(item2);
     }
-    $("#saveTransit").onclick = function(e){
+    $2("#saveTransit").onclick = function(e){
         for (var boxId of ids){
-            localStorage.setItem(boxId, $("#" + boxId).value)
+            localStorage.setItem(boxId, $2("#" + boxId).value)
         }
-        localStorage.setItem("display_sel", $("#display_sel").selectedIndex);
+        localStorage.setItem("display_sel", $2("#display_sel").selectedIndex);
         buildTableContent();
         printSuccess('経路設定を保存しました。')
     }
 }
-
 /*
  * bodyが読み込まれたときに発火する関数。
  */
 function bodyLoadEvent() {
     initCheckboxAttr();
     initTextboxAttr();
-
-    $('#termBack').onclick = function(e){
+    $2('#termBack').onclick = function(e){
         if (showingTerm){
             hideTerm();
         }
     };
-
-    $('#editBack').onclick = function(e){
+    $2('#editBack').onclick = function(e){
         if (showingEdit){
             hideEdit();
         }
     };
-
-    $('#showTerm').onclick = function(e){
+    $2('#showTerm').onclick = function(e){
         e.stopPropagation();
     };
-
-    $('#editWorktime').onclick = function(e){
+    $2('#editWorktime').onclick = function(e){
         e.stopPropagation();
     };
-
     // shift_submitエレメントにonclick属性を追加。(イベントハンドラを登録)
-    $('#shift_submit').onclick = function(){
+    $2('#shift_submit').onclick = function(){
         extractData();
     };
-
-    $('#json_submit').onclick = function(){
-        theYggdrasil = JSON.parse($('#json_input_textarea').value);
+    $2('#json_submit').onclick = function(){
+        theYggdrasil = JSON.parse($2('#json_input_textarea').value);
         saveData();
     };
-
-    $('#add_submit').onclick = function(){
+    $2('#add_submit').onclick = function(){
         initAddWorktime();
     };
-
     var local_data = localStorage.getItem("data");
     if (local_data != null) {
-        if ($('#json_checkbox').checked){
-            $('#json_textarea').value = JSON.stringify(JSON.parse(local_data), null, "    ");
+        if ($2('#json_checkbox').checked){
+            $2('#json_textarea').value = JSON.stringify(JSON.parse(local_data), null, "    ");
         } else {
-            $('#json_textarea').value = local_data;
+            $2('#json_textarea').value = local_data;
         }
         theYggdrasil = JSON.parse(local_data);
         buildTableContent();
     }
 }
-
 /*
  * ある日の勤務時間objのArrayに、新しい仲間を加える。
  * もしもどれかの勤務時間と連続してる一連の時間だったならmerge。
@@ -404,7 +383,6 @@ function pushWorktime(shifts, sh, sm, fh, fm){
     var count = 0;
     var _shifts = [];
     var merged = false;
-
     for (var shift of shifts){
         if (!merged && timeEquals(shift["finish"], start)){
             _shifts.push({"start": shift["start"], "finish": finish})
@@ -432,7 +410,6 @@ function pushWorktime(shifts, sh, sm, fh, fm){
     });
     return _shifts;
 }
-
 function larger(time1, time2){
     if (time1["hour"] > time2["hour"]){
         return time1;
@@ -444,40 +421,32 @@ function larger(time1, time2){
         return time2;
     }
 }
-
 /*
  * 2つの時間HH/MMが一致するかを返すだけの関数。
  */
 function timeEquals(time1, time2){
     return time1["hour"] === time2["hour"] && time1["min"] === time2["min"];
 }
-
 /*
  * テキストエリアの内容を解釈してJSON化・table化する。
  */
 function extractData(){
     ////////この関数のみの変数(var宣言をつける。本当は変数名がかぶらないならいらない。)で、for-loopの外に置いときたい組////////
-
-    var rowValue = $('#shift_textarea').value;
+    var rowValue = $2('#shift_textarea').value;
     var lines = rowValue.split('\n');
-
     var theDay = "";
     var theWorktime = [] // 勤務時間を格納するArray(数がわからず複数個ありうるのでArray)
     var theWorkingTree = {"modified": makeDateString(today, '{0}/{1}/{2}')}; // 半期のデータ記録を格納するObject
-
     var isFirstHalf = null;
     var theMonth = null;
     var theYear = null;
-
     ///////////lineごとの処理///////////
     for (var line of lines) {
         var dayMatch = line.match(/\d+\/\d+(?=\([月火水木金土日]\))/g); 
         // Array<String> matches
         // ["8/14"] or null
-
         if (dayMatch != null && dayMatch.length == 1){
             // この行が8/14(金)[確定]とか書いてある行
-
             if (theWorktime.length > 0){
                 // すでに今までに11:30-22:15とかがあった
                 theWorkingTree[theDay] = theWorktime;
@@ -487,7 +456,6 @@ function extractData(){
             }
             theDay = addYearToDay(dayMatch[0]); // "2017/8/14"
             // theDayを更新(次への布石)
-
             if (isFirstHalf == null){
                 var _d = new Date(theDay);
                 isFirstHalf = _d.getDate() <= 15;
@@ -495,18 +463,15 @@ function extractData(){
                 theYear = _d.getFullYear();
             }
         }
-
         timeMatch = line.match(/(\d+):(\d+)-(\d+):(\d+)/);
         // Array<String> matches
         // ["11:30-12:30", "11", "30", "12", "30"]
-
         if (timeMatch != null){
             //この行が11:30-20:15とか書いてある行
             var sh = parseInt(timeMatch[1]);
             var sm = parseInt(timeMatch[2]);
             var fh = parseInt(timeMatch[3]);
             var fm = parseInt(timeMatch[4]);
-
             if (fh < sh || (fh === sh && fm < sm)){
                 fh += 24;
             }
@@ -520,45 +485,36 @@ function extractData(){
         theWorktime = [];
     }
     /////////////////line処理完了//////////////////
-
     if (theYear == null){
         // inputされたデータががおかしかった
         return;
     }
-
     var _postfix = isFirstHalf ? "0" : "1"; // 前半なら0, 後半なら1
     var _title = theYear + "." +theMonth + "." + _postfix;  //2017.8.0 = 2017年8月前半
     theYggdrasil[_title] = theWorkingTree;
-
     saveData();
-
     // textareaの内容をリセット
-    $('#shift_textarea').value = '';
+    $2('#shift_textarea').value = '';
 }
-
 /*
  * jsonの読み取り専用textareaの値を更新し、テーブルの内容を更新し、localStorageにデータを保存する3つの作業をまとめた関数。
  */
 function saveData() {
     // JSONを整理して表示
-    if ($('#json_checkbox').checked){
-        $('#json_textarea').value = JSON.stringify(theYggdrasil, null, "    ");
+    if ($2('#json_checkbox').checked){
+        $2('#json_textarea').value = JSON.stringify(theYggdrasil, null, "    ");
     } else {
-        $('#json_textarea').value = JSON.stringify(theYggdrasil);
+        $2('#json_textarea').value = JSON.stringify(theYggdrasil);
     }
     buildTableContent();
     localStorage.setItem("data", JSON.stringify(theYggdrasil));
 }
-
 function buildTableContent() {
     var theNearestDate = null; // 次の勤務dayのdateobj
     var theNearestWorkTime = []; //次の勤務デイの勤務時間Array
-
     var theSecNearestDate = null; // 次の勤務dayのdateobj
     var theSecNearestWorkTime = []; //次の勤務デイの勤務時間Array
-
     var nowMs = Date.now();
-
     var keys = Object.keys(theYggdrasil);
     // 並び替え (2017.8.0と2016.9.1など...)
     keys.sort(function(a,b){
@@ -573,26 +529,21 @@ function buildTableContent() {
         return 0;
     });
     ////end: 並び替え////
-
     var tableHtml = '<table class="table table-striped"><tr><th>#</th><th>期間</th><th>実働時間</th><th>作成日時</th></tr>';
-
     // 半月毎の処理
     // keysはtheYggdrasilのkey配列を並び替えたもの
     for (var keyTerm of keys) {
         if (!theYggdrasil.hasOwnProperty(keyTerm)) {
             continue;
         }
-
         // 半月の勤務時間データ
         var _WorkingTree = theYggdrasil[keyTerm];
-
         // 拘束時間の合計
         var wholeBondedMin = 0;
         // 休憩時間の合計
         var wholeRestMin = 0;
         // 作成日時
         var modifiedDay = "";
-
         /*
          * _WorkingTree(半期の勤務obj)の構造は
          * 
@@ -607,13 +558,11 @@ function buildTableContent() {
             if (!_WorkingTree.hasOwnProperty(keyDay)){
                 continue;
             }
-
             // keyDayは"2017/8/1"系か"modified" (modifiedは一回だけ)
             if (keyDay === "modified"){
                 modifiedDay = _WorkingTree[keyDay]; // "2017/7/30"とかが格納される
             } else {
                 var shifts = _WorkingTree[keyDay]; // Array<Object> [勤務時間Obj1, 勤務時間Obj2...]
-
                 var dateObj = new Date(keyDay); // Date("2017/8/1")
                 dateObj.setHours(shifts[shifts.length-1]["start"]["hour"]);
                 dateObj.setMinutes(shifts[shifts.length-1]["start"]["min"]);
@@ -632,7 +581,6 @@ function buildTableContent() {
                         }
                     }
                 }
-
                 for (var shift of shifts){
                     // 拘束時間
                     var bonded = getBondedMinute(shift);
@@ -643,47 +591,36 @@ function buildTableContent() {
         }
         tableHtml += makeTrHtml(keyTerm, wholeBondedMin - wholeRestMin, modifiedDay);
     }
-
     tableHtml += '</table>'
-
     var nextWorkHtml = '';
+    var secNextWH = '';
+    var advice = '';
     if (theNearestDate != null) {
-        var style = theSecNearestDate == null ? ' style="margin-bottom:3em"': '';
-        var transit = makeYahooTransitURL(theNearestDate);
-        var transithtml = '';
-        if (transit != ''){
-            transithtml = '<a href="{0}" target="_new">Yahoo 路線で出勤経路を検索</a>'.format(transit);
-        }
-        nextWorkHtml += '<div{0}><h4>次の出勤日:</h4><p>{1} {2}</p>{3}</div>'.format(style, makeDateString(theNearestDate, '{1}/{2} ({3})'), makeWorktimeString(theNearestWorkTime), transithtml);
+        nextWorkHtml = '<div><h4>次の出勤日:</h4><p>{0} {1}</p></div>'.format(makeDateString(theNearestDate, '{1}/{2} ({3})'), makeWorktimeStringWithLink(theNearestDate, theNearestWorkTime));
+        advice = '<p style="margin:2em 0 3em 0;"><small>tips: 出勤時間をクリックすると、Yahoo路線で出勤の経路を検索できます。</small></p>'
     }
     if (theSecNearestDate != null) {
-        var transit = makeYahooTransitURL(theSecNearestDate);
-        var transithtml = '';
-        if (transit != ''){
-            transithtml = '<small><a href="{0}" target="_new">Yahoo 路線で出勤経路を検索</a></small>'.format(transit);
-        }
-        nextWorkHtml += '<h4 class="h4">その次: {0} {1} {2}</h4>'.format(makeDateString(theSecNearestDate, '{1}/{2} ({3})'), makeWorktimeString(theSecNearestWorkTime), transithtml);
+        secNextWH = '<h4>その次: {0} {1}</h4>'.format(makeDateString(theSecNearestDate, '{1}/{2} ({3})'), makeWorktimeStringWithLink(theSecNearestDate, theSecNearestWorkTime));
     }
-
-    tableHtml = nextWorkHtml + tableHtml;
-
-    $("#shift_table").innerHTML = tableHtml;
+    tableHtml = nextWorkHtml + secNextWH + advice + tableHtml;
+    $2("#shift_table").innerHTML = tableHtml;
 }
-
-function makeYahooTransitURL(date){
-    var timeinput = parseInt($("#yttime").value);
+function makeYahooTransitURL(day, wt){
+    var timeinput = parseInt($2("#yttime").value);
     if (isNaN(timeinput))　return '';
-    var frominput = encodeURI($("#ytfrom").value);
+    var frominput = encodeURI($2("#ytfrom").value);
     if (frominput === '') return '';
-    var toinput = encodeURI($("#ytto").value);
+    var toinput = encodeURI($2("#ytto").value);
     if (toinput === '') return '';
-    var date = new Date(date.getTime() - timeinput * 60 * 1000)
+    day.setHours(wt["start"]["hour"]);
+    day.setMinutes(wt["start"]["min"]);
+    var date = new Date(day.getTime() - timeinput * 60 * 1000)
     var u = 'https://transit.yahoo.co.jp/search/result';
     u += '?flatlon=';
-    u += '&from=' + encodeURI($("#ytfrom").value);
+    u += '&from=' + encodeURI($2("#ytfrom").value);
     u += '&tlatlon=';
-    u += '&to=' + encodeURI($("#ytto").value);
-    var viainputs = $("#ytvia").value.split(",")
+    u += '&to=' + encodeURI($2("#ytto").value);
+    var viainputs = $2("#ytvia").value.split(",")
     if (viainputs.length >= 1) u += '&via=' + encodeURI(viainputs[0]);
     if (viainputs.length === 2) u += '&via=' + encodeURI(viainputs[1]);
     if (viainputs.length === 3) u += '&via=' + encodeURI(viainputs[2]);
@@ -698,29 +635,28 @@ function makeYahooTransitURL(date){
     u += '&m1=' + minutes.charAt(0);
     u += '&type=4'; // 到着時刻設定
     u += '&ticket=ic';
-    if ($("#al_checkbox").checked) u += '&al=1';
-    if ($("#shin_checkbox").checked) u += '&shin=1';
-    if ($("#ex_checkbox").checked) u += '&ex=1';
-    if ($("vhb_checkbox").checked) u += '&hb=1';
-    if ($("#lb_checkbox").checked) u += '&lb=1';
-    if ($("#sr_checkbox").checked) u += '&sr=1';
+    if ($2("#al_checkbox").checked) u += '&al=1';
+    if ($2("#shin_checkbox").checked) u += '&shin=1';
+    if ($2("#ex_checkbox").checked) u += '&ex=1';
+    if ($2("vhb_checkbox").checked) u += '&hb=1';
+    if ($2("#lb_checkbox").checked) u += '&lb=1';
+    if ($2("#sr_checkbox").checked) u += '&sr=1';
     var sigma = [0, 2, 1];
-    u += '&s=' + sigma[$("#display_sel").selectedIndex];
+    u += '&s=' + sigma[$2("#display_sel").selectedIndex];
     u += '&expkind=1';
     u += '&ws=3'; //少しゆっくり
     u += '&kw=';
     /*
-    var match_from = $("#yturl").value.match(/from=([%A-Z1-9]+)/);
-    var match_to = $("#yturl").value.match(/to=([%A-Z1-9]+)/);
+    var match_from = $2("#yturl").value.match(/from=([%A-Z1-9]+)/);
+    var match_to = $2("#yturl").value.match(/to=([%A-Z1-9]+)/);
     if (match_from != null && match_to != null && match_from[1] === frominput && match_to[1] === toinput){
-        var match_mtf = $("#yturl").value.match(/mtf=(\d+)/);
+        var match_mtf = $2("#yturl").value.match(/mtf=(\d+)/);
         if (match_mtf != null){
             u += '&mtf=' + match_mtf[1];
         }
     }*/
     return u;
 }
-
 /*
  * 勤務時間objのArrayから"11:30-20:00"といったstringをつくる関数。
  */
@@ -742,7 +678,29 @@ function makeWorktimeString(shifts) {
     }
     return r;
 }
-
+function makeWorktimeStringWithLink(date, shifts) {
+    var r = '';
+    var c = 0;
+    for (var shift of shifts){
+        if (c > 0) r+= ', '
+        var _st = shift["start"];
+        var _fn = shift["finish"];
+        var _sth = _st["hour"];
+        var _stm = _st["min"];
+        var _fnh = _fn["hour"];
+        var _fnm = _fn["min"];
+        if (_stm  < 10) _stm = '0' + _stm;
+        if (_fnm < 10) _fnm = '0' + _fnm;
+        var transit = makeYahooTransitURL(date, shift);
+        var template = '{0}:{1}-{2}:{3}';
+        if (transit != ''){
+            template = '<a href="{4}" target="_new">{0}:{1}-{2}:{3}</a>';
+        }
+        r += template.format(_sth,_stm,_fnh,_fnm,transit);
+        c++;
+    }
+    return r;
+}
 /*
  * いろんな形式のdateから好きな形の日付Stringに変換する関数
  */
@@ -762,7 +720,6 @@ function makeDateString(input, formatting){
     var day = days[dateObj.getDay()];
     return formatting.format(year, month, date, day);
 }
-
 /*
  * 一覧tableのtrをつくる関数。
  * 
@@ -779,7 +736,6 @@ function makeTrHtml(keyTerm, actualTime, modifiedDay) {
     _t += '</tr>';
     return _t;
 }
-
 /*
  * "2017.8.0"とかの形式的な記述から"8月前半"という人が読みやすい文字列を返す関数。
  */
@@ -788,17 +744,15 @@ function parseKeyTerm(keyTerm) {
     var _post = _ks[2] == "0" ? "前半" : "後半";
     return '{0}月{1}'.format(_ks[1], _post);
 }
-
 /*
  * 半月分のデータを消す関数。バツマークをクリックしたときに呼ばれる。
  */
 function deleteTerm(keyTerm){
-    if ($('#delete_checkbox').checked || window.confirm("本当に"+parseKeyTerm(keyTerm)+"のデータを削除しますか?")){
+    if ($2('#delete_checkbox').checked || window.confirm("本当に"+parseKeyTerm(keyTerm)+"のデータを削除しますか?")){
         delete theYggdrasil[keyTerm];
         saveData();
     }
 }
-
 /*
  * tableのタイトルの部分("8月前半"など)をクリックしたときに発火する関数
  * theYggdrasilから指定の半月分のデータを抜き出し表示。
@@ -849,19 +803,15 @@ function showTerm(keyTerm) {
             }
         }
     }
-    $("#showTerm").innerHTML += html;
-    $("#termBack").style.display = 'block';
+    $2("#showTerm").innerHTML += html;
+    $2("#termBack").style.display = 'block';
     showingTerm = true;
 }
-
 function edit(keyDay, keyTerm){
     var _WorkingTree = theYggdrasil[keyTerm];
     var shifts = _WorkingTree[keyDay];
-
     var html = '<h3>{0}の勤務時間の編集</h3>'.format(keyDay);
-
     var hasel,hafsel,masel,mafsel;
-
     for (var x = 0; x < shifts.length; x++) {
         shift = shifts[x]
         html += '<div style="margin-bottom:1em;">'
@@ -889,7 +839,6 @@ function edit(keyDay, keyTerm){
         hfsel += '</select>';
         hasel += '</select>';
         hafsel += '</select>';
-
         var msel = '<select class="form-control" id="msel">';
         var mfsel = '<select class="form-control" id="mfsel">';
         masel = '<select class="form-control" id="masel">';
@@ -915,7 +864,6 @@ function edit(keyDay, keyTerm){
         mfsel += '</select>';
         masel += '</select>';
         mafsel += '</select>';
-
         html += hhmmformformat.format(hsel, msel, hfsel, mfsel);
         html += '<button class="btn btn-primary" type="submit" onclick="saveEdit(\'{0}\',\'{1}\', {2})">Save</button>'.format(keyDay, keyTerm, x);
         html += '&nbsp;<button class="btn btn-danger" type="submit" onclick="removeEdit(\'{0}\',\'{1}\',{2})">Remove</button>'.format(keyDay, keyTerm, x);
@@ -927,37 +875,31 @@ function edit(keyDay, keyTerm){
     html += hhmmformformat.format(hasel, masel, hafsel, mafsel);
     html += '<button class="btn btn-primary" type="submit" onclick="addEdit(\'{0}\',\'{1}\')">勤務時間を追加</button>'.format(keyDay, keyTerm);
     html += '</div>';
-    $("#editWorktime").innerHTML = html;
-    $("#editBack").style.display = 'block';
+    $2("#editWorktime").innerHTML = html;
+    $2("#editBack").style.display = 'block';
     showingEdit = true;
 }
-
 function addWorktime(){
-    var year = $("#yearaw").selectedIndex + today.getFullYear() - 1;
-    var month = $("#monthaw").selectedIndex + 1;
-    var date = $("#dateaw").selectedIndex + 1;
-
+    var year = $2("#yearaw").selectedIndex + today.getFullYear() - 1;
+    var month = $2("#monthaw").selectedIndex + 1;
+    var date = $2("#dateaw").selectedIndex + 1;
     if (monthday(year, month) < date){
         printError('日付が存在しない日付です!');
         return;
     }
-
-    var sh = $("#asel").selectedIndex;
-    var sm = 15 * $("#aselz").selectedIndex;
-    var fh = $("#afsel").selectedIndex;
-    var fm = 15 * $("#afselz").selectedIndex;
-
+    var sh = $2("#asel").selectedIndex;
+    var sm = 15 * $2("#aselz").selectedIndex;
+    var fh = $2("#afsel").selectedIndex;
+    var fm = 15 * $2("#afselz").selectedIndex;
     var wtobj = {"start":{"hour":sh,"min":sm},"finish":{"hour":fh,"min":fm}};
     
     var _postfix = date <= 15 ? '0' : '1';
     var keyTerm = '{0}.{1}.{2}'.format(year, month, _postfix);
     var keyDay = '{0}/{1}/{2}'.format(year, month, date);
-
     if (!canAdd(keyTerm, keyDay, wtobj)){
         printError('勤務時間が不正確または競合 ({0} {1})'.format(keyDay, makeWorktimeString([wtobj])));
         return;
     }
-
     var shiftStr = '';
     if (theYggdrasil.hasOwnProperty(keyTerm)){
         if (theYggdrasil[keyTerm].hasOwnProperty(keyDay)){
@@ -973,27 +915,21 @@ function addWorktime(){
     }
     theYggdrasil[keyTerm]["modified"] = makeDateString(today, '{0}/{1}/{2}');
     saveData();
-
     var shiftStr2 = makeWorktimeString(theYggdrasil[keyTerm][keyDay]);
-
     printSuccess('勤務時間を追加しました。 {0}: {1} -> {2}'.format(keyDay, shiftStr, shiftStr2));
-
-    if ($("#reset_checkbox").checked){
+    if ($2("#reset_checkbox").checked){
         initAddWorktime();
     }
 }
-
 function initAddWorktime(){
     var year = today.getFullYear();
     var month = today.getMonth() + 1;
     var date = today.getDate();
-
     var year_sel = '<select class="form-control" id="yearaw">';
     year_sel += '<option>{0}</option>'.format(year - 1);
     year_sel += '<option selected>{0}</option>'.format(year);
     year_sel += '<option>{0}</option>'.format(year + 1);
     year_sel += '</select>';
-
     var month_sel = '<select class="form-control" id="monthaw">';
     for (var i = 1;i < 13;i++){
         if (i === month){
@@ -1003,7 +939,6 @@ function initAddWorktime(){
         }
     }
     month_sel += '</select>';
-
     var date_sel = '<select class="form-control" id="dateaw">';
     for (var i = 1;i < 32; i++){
         if (i === date){
@@ -1013,7 +948,6 @@ function initAddWorktime(){
         }
     }
     date_sel += '</select>';
-
     var asel = '<select class="form-control" id="asel">';
     var afsel = '<select class="form-control" id="afsel">';
     for (var i = 0; i < 31; i++){
@@ -1027,7 +961,6 @@ function initAddWorktime(){
     }
     asel += '</select>';
     afsel += '</select>';
-
     var aselz = '<select class="form-control" id="aselz">';
     var afselz = '<select class="form-control" id="afselz">';
     for (var i = 0; i < 60; i += 15){
@@ -1042,14 +975,11 @@ function initAddWorktime(){
     }
     aselz += '</select>';
     afselz += '</select>';
-
     var html = '<h3>勤務時間の追加</h3><div class="input-group a">{0}<div class="input-group-addon">年</div>{1}<div class="input-group-addon">月</div>{2}<div class="input-group-addon">日</div></div>'.format(year_sel, month_sel, date_sel);
     html += hhmmformformat.format(asel, aselz, afsel, afselz);
     html += '<button class="btn btn-primary" type="submit" onclick="addWorktime()">Add</button> <button class="btn btn-default" type="submit" onclick="initAddWorktime()">Reset</button>';
-
-    $("#addWorktime").innerHTML = html;
+    $2("#addWorktime").innerHTML = html;
 }
-
 function monthday(year, month){
     var lastday = new Array('', 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31);
     if ((year % 4 == 0 && year % 100 != 0) || year % 400 == 0){
@@ -1057,15 +987,12 @@ function monthday(year, month){
     }
     return lastday[month];
 }
-
 function isLargerThan(time1, time2){
     return time1["hour"] > time2["hour"] || (time1["hour"] === time2["hour"] && time1["min"] > time2["min"]);
 }
-
 function isLargerOrEqualTo(time1, time2){
     return isLargerThan(time1, time2) || timeEquals(time1, time2);
 }
-
 function compatible(wt1, wt2){
     if (timeEquals(wt1["start"], wt2["start"]) || timeEquals(wt1["finish"], wt2["finish"])){
         return false;
@@ -1075,11 +1002,9 @@ function compatible(wt1, wt2){
         return isLargerOrEqualTo(wt2["start"], wt1["finish"]);
     }
 }
-
 function canAdd(keyTerm, keyDay, wtobj){
     return canSave(keyTerm, keyDay, wtobj, -1);
 }
-
 function canSave(keyTerm, keyDay, wtobj, exclude){
     if (timeEquals(wtobj["start"], wtobj["finish"])){
         return false;
@@ -1096,78 +1021,60 @@ function canSave(keyTerm, keyDay, wtobj, exclude){
     }
     return true;
 }
-
 function addEdit(keyDay, keyTerm){
-    var sh = $("#hasel").selectedIndex;
-    var sm = 15 * $("#masel").selectedIndex;
-    var fh = $("#hafsel").selectedIndex;
-    var fm = 15 * $("#mafsel").selectedIndex;
-
+    var sh = $2("#hasel").selectedIndex;
+    var sm = 15 * $2("#masel").selectedIndex;
+    var fh = $2("#hafsel").selectedIndex;
+    var fm = 15 * $2("#mafsel").selectedIndex;
     var wtobj = {"start":{"hour":sh,"min":sm},"finish":{"hour":fh,"min":fm}};
-
     if (!canAdd(keyTerm, keyDay, wtobj)){
         printError('勤務時間が不正確または競合 ({0} {1})'.format(keyDay, makeWorktimeString([wtobj])));
         return;
     }
-
     var shiftStr = makeWorktimeString(theYggdrasil[keyTerm][keyDay]);
-
     theYggdrasil[keyTerm][keyDay] = pushWorktime(theYggdrasil[keyTerm][keyDay], sh, sm, fh, fm);
-
     theYggdrasil[keyTerm]["modified"] = makeDateString(today, '{0}/{1}/{2}');
-
     hideEdit();
-    $("#showTerm").innerHTML = '';
+    $2("#showTerm").innerHTML = '';
     saveData();
     showTerm(keyTerm);
-
     var shiftStr2 = makeWorktimeString(theYggdrasil[keyTerm][keyDay]);
-
     printSuccess('勤務時間を追加しました。 {0}: {1} -> {2}'.format(keyDay, shiftStr, shiftStr2));
 }
-
 function toggleEdit(keyDay){
-    var str = $("#tog{0}".format(keyDay)).style.display;
+    var str = $2("#tog{0}".format(keyDay)).style.display;
     if (str === 'none'){
-        $("#tog{0}".format(keyDay)).style.display = 'block';
+        $2("#tog{0}".format(keyDay)).style.display = 'block';
     } else {
-        $("#tog{0}".format(keyDay)).style.display = 'none';
+        $2("#tog{0}".format(keyDay)).style.display = 'none';
     }
 }
-
 function hideEdit(){
-    $("#editWorktime").innerHTML = '';
-    $("#editBack").style.display = 'none';
+    $2("#editWorktime").innerHTML = '';
+    $2("#editBack").style.display = 'none';
     showingEdit = false;
 }
-
 function saveEdit(keyDay, keyTerm, x){
     if (showingEdit){
-        var sh = $("#hsel").selectedIndex;
-        var sm = 15 * $("#msel").selectedIndex;
-        var fh = $("#hfsel").selectedIndex;
-        var fm = 15 * $("#mfsel").selectedIndex;
-
+        var sh = $2("#hsel").selectedIndex;
+        var sm = 15 * $2("#msel").selectedIndex;
+        var fh = $2("#hfsel").selectedIndex;
+        var fm = 15 * $2("#mfsel").selectedIndex;
         var wtobj = {"start":{"hour":sh,"min":sm},"finish":{"hour":fh,"min":fm}};
-
         if (!canSave(keyTerm, keyDay, wtobj, x)){
             printError('勤務時間が不正確または競合 ({0} {1})'.format(keyDay, makeWorktimeString([wtobj])));
             return;
         }
-
         var shiftStr = makeWorktimeString([theYggdrasil[keyTerm][keyDay][x]]);
-
         var newArray = [];
         for (var i = theYggdrasil[keyTerm][keyDay].length - 1; i >= 0; i--) {
             if (i != x){
                 newArray.push(theYggdrasil[keyTerm][keyDay][i]);
             }
         }
-
         theYggdrasil[keyTerm][keyDay] = pushWorktime(newArray, sh, sm, fh, fm);
-
         hideEdit();
-        $("#showTerm").innerHTML = '';
+        $2("#showTerm").innerHTML = '';
         saveData();
         showTerm(keyTerm);
         sm = sm == 0 ? '00' : sm + ''; 
@@ -1175,30 +1082,25 @@ function saveEdit(keyDay, keyTerm, x){
         printSuccess('変更内容を保存しました。 {0}: {1} -> {2}'.format(keyDay, shiftStr, '{0}:{1}-{2}:{3}'.format(sh, sm, fh, fm)));
     }
 }
-
 function printSuccess(massage){
-    $("#success").innerHTML = massage + '<button type="button" class="close" aria-label="Close" onclick="vanishSuccess()"><span aria-hidden="true">&times;</span></button>';
-    $("#success").style.display = 'block';
+    $2("#success").innerHTML = massage + '<button type="button" class="close" aria-label="Close" onclick="vanishSuccess()"><span aria-hidden="true">&times;</span></button>';
+    $2("#success").style.display = 'block';
 }
-
 function vanishSuccess(){
-    $("#success").style.display = 'none';
-    $("#success").innerHTML = '';
+    $2("#success").style.display = 'none';
+    $2("#success").innerHTML = '';
 }
-
 function printError(massage){
-    $("#error").innerHTML = massage + '<button type="button" class="close" aria-label="Close" onclick="vanishError()"><span aria-hidden="true">&times;</span></button>';
-    $("#error").style.display = 'block';
+    $2("#error").innerHTML = massage + '<button type="button" class="close" aria-label="Close" onclick="vanishError()"><span aria-hidden="true">&times;</span></button>';
+    $2("#error").style.display = 'block';
 }
-
 function vanishError(){
-    $("#error").style.display = 'none';
-    $("#error").innerHTML = '';
+    $2("#error").style.display = 'none';
+    $2("#error").innerHTML = '';
 }
-
 function removeEdit(keyDay, keyTerm, x){
     var shiftStr = makeWorktimeString([theYggdrasil[keyTerm][keyDay][x]]);
-    if ($("#delete_day_checkbox").checked || window.confirm('本当に{0} {1}を削除しますか?'.format(keyDay, shiftStr))){
+    if ($2("#delete_day_checkbox").checked || window.confirm('本当に{0} {1}を削除しますか?'.format(keyDay, shiftStr))){
         if (theYggdrasil[keyTerm][keyDay].length === 1){
             delete theYggdrasil[keyTerm][keyDay];
             if (Object.keys(theYggdrasil[keyTerm]).length == 1){
@@ -1216,27 +1118,24 @@ function removeEdit(keyDay, keyTerm, x){
         }
     }
     hideEdit();
-    $("#showTerm").innerHTML = '';
+    $2("#showTerm").innerHTML = '';
     saveData();
     showTerm(keyTerm);
 }
-
 /*
  * 半月の勤務時間一覧を消す関数。
  */
 function hideTerm(){
-    $("#showTerm").innerHTML = '';
-    $("#termBack").style.display = 'none';
+    $2("#showTerm").innerHTML = '';
+    $2("#termBack").style.display = 'none';
     showingTerm = false;
 }
-
 /*
  * min以上max未満であればtrue
  */
 function isin(num, min, max){
     return num >= min && num < max;
 }
-
 /*
  * 拘束時間から休憩時間を求める関数。
  *  4.5 -  6.0 -> 0.50
@@ -1257,7 +1156,6 @@ function getRestMin(bondedMin) {
     }
     return restMin;
 }
-
 /*
  * worktimeObjの構造は、8:30-16:45なら
  *
@@ -1273,12 +1171,10 @@ function getRestMin(bondedMin) {
 function getBondedMinute(worktimeObj){
     var _st = worktimeObj["start"];
     var _fn = worktimeObj["finish"];
-
     var startH = _st["hour"];
     var startM = _st["min"];
     var finishH = _fn["hour"];
     var finishM = _fn["min"];
-
     return (finishH - startH) * 60 + (finishM - startM);
 }
 /*
@@ -1290,7 +1186,6 @@ function addYearToDay(theDay) {
     var _day = theDay.split('/');
     var _theMonth = parseInt(_day[0]);
     var theDate = parseInt(_day[1]);
-
     // 年明け前に正月のシフト考えるような年明けを挟むときの処理
     year = today.getFullYear();
     // このHTMLを開いている付きが11,12月で、textareaからのデータの月が1,2月。
@@ -1298,15 +1193,13 @@ function addYearToDay(theDay) {
     if (today.getMonth() >= 10 && _theMonth <= 2){
         year ++;
     }
-
     return year + "/" + theDay;
 }
-
 /*
- * jQueryの$()とおんなじ
+ * jQueryの$2()とおんなじ
  * CSS-likeに#idとか.class、tagnameで、　HTML-DOM-Element or Array<HTML-DOM-Element>を返す関数。
  */
-function $(elemId) {
+function $2(elemId) {
     if (elemId.startsWith('#')){
         return document.getElementById(elemId.split('#')[1]);
     } else if (elemId.startsWith('.')){
@@ -1326,8 +1219,7 @@ String.prototype.format = function (arg) {
     }
     return text;
 }
-
-// bodyのロード時に関数を実行。 document.body === $('body')[0] -> true (===は型まで同じでtrueを返す言語構造)
+// bodyのロード時に関数を実行。 document.body === $2('body')[0] -> true (===は型まで同じでtrueを返す言語構造)
 document.body.onload = bodyLoadEvent();
 </script>
 </html>
