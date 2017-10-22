@@ -1,8 +1,9 @@
 <!DOCTYPE html>
-<html>
+<html lang="ja">
 <!--
-made by yudai takegawa
+made by yudai takegawa & naoki iwasa
 (c) 2017 all rights reserved
+
 you can:
  - distribute
  - modify
@@ -13,136 +14,436 @@ you cannot:
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
     <title>Workaholic</title>
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/css/bootstrap.min.css" integrity="sha384-/Y6pD6FV/Vv2HJnA6t+vslU6fwYXjCFtcEpHbNJ0lyAFsXTsjBbfaDjzALeQsN6M" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+	  <link rel="stylesheet" type="text/css" href="https://npmcdn.com/flatpickr/dist/themes/material_red.css">
+    <link href="https://fonts.googleapis.com/css?family=Londrina+Outline" rel="stylesheet">
+	  <link rel="stylesheet" type="text/css" href="material_green_modified.css">
     <style>
-        body{
-            color:#444;
-        }
-        .hoverer:hover {
-            background-color: #eee;
-            color: #000;
-            cursor: pointer;
-        }
-        .addEdit {
-            background-color: #f5f5f5;
-            border-radius: 5px;
-            border: 1px solid #eee;
-            padding-bottom: 1em;
-        }
-        .delete{
-            width: .8em;
-        }
-        .delete:hover{
-            cursor: pointer;
-        }
-        #showTerm, #editWorktime{
-            top: 10px;
-            background-color: #fff;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            padding: 18px 20px;
-            display: inline-block;
-            margin-top: 1em;
-        }
-        #editWorktime .input-group{
-            max-width: 300px;
-            margin:4px;
-        }
-        #termBack, #editBack{
-            text-align: center;
-            top:0;
-            left: 0;
-            width: 100%;
-            height: auto !important;
-            min-height: 100%;
-            display: none;
-            background-color: rgba(255,255,255,.5);
-            padding-bottom: 15em
-        }
-        #termBack{
-            z-index: 10;
-            position: absolute;
-        }
-        #editBack{
-            z-index: 15;
-            position: fixed;
-        }
-        .block {
-            padding: 10px;
-            cursor: pointer;
-        }
-        .block:hover {
-            background-color: #eeeeee;
-        }
-        #shift_table div{
-            margin: 3em 0 1em;
-            border: 1px solid #eeeeee;
-            border-left: 5px solid #1b809e;
-            border-radius: 2px;
-            padding: 20px
-        }
-        #shift_table div h4{
-            color :#1b809e;
-            font-weight: bold;
-        }
-        #shift_table div p{
-            font-size: 2em;
-        }
-        #success, #error {
-            margin-top: 1em;
-            padding: 1em;
-        }
-        #addWorktime{
-            margin-bottom: 3em;
-        }
-        #addWorktime .input-group{
-            max-width: 300px;
-            margin:4px;
-            text-align: right;
-        }
-        .a{
-            max-width: 370px !important;
-        }
-        del {
-            color: #777;
-            font-style: italic;
-        }
+    * {font-size: 14px;}
+	  button.close span{font-size: 18px !important}
+    .pointer, button, label, .listup, .listcont, .monthData{cursor: pointer;}
+    #container{padding-bottom: 3em}
+    #nextBox,#nextOfNextBox,#shiftTable{display: none;}
+    .btn-primary{background-color: #01917b;border-color: #01917b;}
+    .btn-primary:hover{background-color: #007a67;border-color: #007a67;}
+    .btn-outline-primary{border-color: #01917b;color: #007a67;}
+    .btn-outline-primary:hover{background-color: #01917b;border-color: #01917b;}
+    .btn-primary.disabled,.btn-primary:disabled,.btn-primary.disabled:hover,.btn-primary:disabled:hover{background-color:#7bada6;border-color:#7bada6;cursor: default;}
+	  .btn-primary:focus, .btn-primary.focus, .btn-outline-primary:focus, .btn-vprimary.focus {box-shadow: 0 0 0 3px rgba(1, 145, 123, 0.5);}
+	  .is-valid{background-color: #d4edda}
+	  .is-invalid{background-color: #f8d7da}
+    footer{
+        font-size: .6em;
+        width: 100%;
+        text-align: center;
+        padding-top: 15px;
+        padding-bottom: 10px;
+        background-color: #01917b;
+    }
+    footer small, footer a{color: #fff;}
+    footer a{text-decoration: underline;}
+    iframe{display: none}
+    .b{color: white;}
+    a{color: #01917b;}
+    .form-control-sm{font-size: 1em}
+    .form-inline-input input{margin-bottom: .3em;}
+    #nextBox{border: 1px solid #d5e2db;border-left: 5px solid #01917b;padding: 2em;}
+    #nextBox h3{font-size: 22px}
+    #nextBox p, #nextBox a{font-size: 26px;text-decoration: underline;}
+    #nextOfNextBox {font-size: 1.1em;margin:.8em 0;}
+    #nextOfNextWork, #nextOfNextWork a {font-size: 19px;text-decoration: underline;}
+    #thanks{display:none;position: fixed;bottom: 1em;left: 1em;}
+    .remove{color: #D53B5A;cursor: pointer;}
+    .monthData:hover, .remove:hover, .listup:hover, .listcont:hover{background-color: #eee;transition: background-color 0.3s ease 0s;}
+    .listcont{padding:.8em;display: inline-block;}
+    .buttons button{margin-bottom: 1em}
+    .undo{cursor: pointer;text-decoration: underline;}
+    .modal select[data-opt]{max-width: 100px}
+    .aaa{padding-left: .5rem; font-size: 0.9rem;}
+    .bbb{padding-left: 1rem; font-size: 0.8rem;}
+    .aaa, .bbb{display: block;}
+    .monthData small{display: block;}
+    .fpickr-invalid {background-color: #ffe5e5 !important;border-color: #fcb3b3 !important}
+    .fpickr-valid {background-color: #f1ffef !important;border-color: #b6e0b1 !important}
+    .display-4{font-family: 'Londrina Outline', cursive; font-size: 6rem;}
+    .TosBody{text-align: justify;}
+    #ToSModal a{color: rgb(68, 68, 68);}
     </style>
+    <script>
+      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+      })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+      ga('create', 'UA-105309611-1', 'auto');
+      ga('send', 'pageview');
+    </script>
 </head>
 
-<body>
-    <div class="container">
-        <div id="termBack">
-            <div id="showTerm"></div>
-        </div>
-        <div id="editBack">
-            <div id="editWorktime"></div>
-        </div>
-        <h2>Workaholic v1.2.1</h2>
-        <p>textareaにシフト表をコピペしてsubmit。submitしたときに、同時にデータをブラウザに保存します。</p>
-        <textarea id="shift_textarea" rows="7" class="form-control" placeholder="シフト表を全選択してコピー&ペースト..."></textarea><br>
-        <div>
-            <button class="btn btn-default" type="submit" id="shift_submit">勤務時間を追加/上書き</button>
-        </div>
-        <p id="success" style="display: none" class="bg-success text-success"></p>
-        <p id="error" style="display: none" class="bg-danger text-danger"></p>
-        <!--insert table here...-->
-        <div id="shift_table" style="margin: 3em 0;"></div>
-        <div id="addWorktime">
-            <button class="btn btn-primary" type="submit" id="add_submit">勤務時間を手動追加</button>
-        </div>
+<body onload="init()">
+<!-- container -->
+<div class="container" id="container">
 
+
+
+<h1 class="display-4">Workaholic</h1>
+
+<div id="alert"></div>
+
+<!-- TEXTBOX TO C&P SHIFT TABLE -->
+<textarea id="shiftBox" class="form-control" placeholder="シフト表を全選択してコピー&ペースト..." rows=7 style="margin-bottom: 1em"></textarea>
+
+<div class="form-group form-inline" style="margin-bottom: 2.5em">
+  <select class="form-control" id="yearSel" style="margin-right: .8em;margin-bottom: .5em" data-opt="year"></select>
+	<button type="button" class="btn btn-primary" onclick="addWTWithTA()" style="margin-bottom: .5em">勤務時間を追加/上書き</button>
+</div>
+
+<div style="margin-bottom: 3em;">
+	<div id="nextBox" class="rounded">
+    <h3>次の出勤日:</h3>
+    <p style="margin:0;" id="nextWork"></p>
+  </div>
+	<div id="nextOfNextBox">
+    その次:
+    <span id="nextOfNextWork"></span>
+  </div>
+	<p style="font-size: .8em;">tips: 経路情報を登録しておくと、自動でYahoo路線で経路検索できます。</p>
+</div>
+
+<table class="table" style="margin-bottom:3em;width: 100%;max-width: 700px" id="shiftTable">
+	<thead class="thead-default">
+	    <tr><th>#</th><th>期間</th><th>時間</th><th>日数</th><th>回数</th></tr>
+	</thead>
+	<tbody id="shiftList">
+	</tbody>
+</table>
+
+
+<div class="buttons">
+	<button type="button" class="btn btn-outline-primary" onclick="$('#settingsModal').modal()">設定</button>
+	<button type="button" class="btn btn-outline-primary" onclick="checkAddWtModalValidity();$('#addWTModal').modal()">手動で勤務時間を表に追加</button>
+	<button id="routeSetting" type="button" class="btn btn-outline-primary" onclick="setRouteModalFromLS();checkTransitModalValidity();$('#routeModal').modal();">経路検索の設定</button>
+	<button type="button" class="btn btn-outline-primary" onclick="setSalarySettingModalContent();$('#salarySettingModal').modal()">給与概算設定</button>
+  <button id="salaryLaunchButton" type="button" class="btn btn-outline-primary" onclick="launchSalaryModal(this)">給与概算</button>
+</div>
+
+
+
+<!-- #THANKS -->
+<div class="alert alert-success" role="alert" id="thanks" style="display: none">thank you : )</div>
+
+
+</div>
+<!-- /container -->
+
+
+
+<!-- footer -->
+<footer>
+        <a href="" data-toggle="modal" data-target="#ToSModal">利用規約</a>
+        <div class="modal fade" id="ToSModal" tabindex="-1" role="dialog" aria-labelledby="ToSModalTitle" aria-hidden="true">
+          <div class="modal-dialog" role="document">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title" id="ToSModalTitle">利用規約</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+                </button>
+              </div>
+              <div class="modal-body">
+                <p class="ToSBody">
+                  &emsp;当サイトの利用者は以下の事項を理解した上で利用していただきます。本規約は,当サイトのの利用に関わる一切の関係に適用されるものとします。<br>
+                  &emsp;当サイトは、特定の人物,団体,企業等と関与を持つものではありません。
+                  当サイトは，利用者に通知することなく，本サービスの内容を変更しまたは本サービスの提供を中止することができるものとし，これによって利用者に生じた損害について一切の責任を負いません。
+                  当サイトは,細心の注意を払って運営しておりますが,この情報の正確性および完全性を保証するものではありません。
+                  当サイトは,利用者が反映した時点でのモバイルシフトに準拠して実働時間の計算を行っています。モバイルシフトに反映されない場合,モバイルシフトに反映されても当サイトに利用者が反映しない場合にはその値を考慮することができません。
+                  また計算方法も最新でなかったり,正確でなかったりする可能性があります。
+                  当方は、利用者が当サイトに含まれる情報もしくは内容をご利用されたことで直接・間接的に生じた損失に関し一切責任を負うものではありません。<br>
+                  &emsp;当サイトではサイトの利用状況を把握するために,<a href="https://www.google.com/analytics/#?modal_active=none" target="_blank">Google Analytics</a>に登録しています。
+                  このため,Google Analyticsから提供されるトラッキングコードを活用してユーザーのアクセス情報を取得していますが,Googleが収集する情報は匿名のトラフィックデータであり,個人を特定する情報ではありません。
+                  これらの情報について,当サイトではもっぱらサイトの質の向上を図り,より良いサービスを利用者に提供するためにだけに活用していますので,ご了承願います。
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <span class="b">・</span>
+        <a href="" data-toggle="modal" data-target="#ChangeLogModal">更新履歴</a>
+        <div class="modal fade" id="ChangeLogModal" tabindex="-1" role="dialog" aria-labelledby="ChangeLogModalTitle" aria-hidden="true">
+          <div class="modal-dialog" role="document">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title" id="ChangeLogModalTitle">更新履歴</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+                </button>
+              </div>
+              <div class="modal-body">
+                <p>
+                2017.10.12 v.1.1.5<br>
+                給与計算の実装に向けた準備を行いました。<br>
+                2017.10.11 v.1.1.4<br>
+                実働日数、勤務回数を表示しました。<br>
+                2017.9.30  v.1.1.3<br>
+                デザインを向上しました。<br>
+                2017.9.29  v.1.1.2<br>
+                出勤経路検索を改善しました。<br>
+                モバイルへのリンクを設置しました。<br>
+                2017.9.9   v.1.1.1<br>
+                作者へのコンタクトフォームを実装しました。<br>
+                2017.9.7   v.1.0.1<br>
+                更新履歴を開始しました。<br>
+              </p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <span class="b">・</span>
+        <a href="" data-toggle="modal" data-target="#ContactModal" onClick="clearForm()">作者へ</a>
+        <div class="modal fade" id="ContactModal" tabindex="-1" role="dialog" aria-labelledby="ContactModalLabel" aria-hidden="true">
+          <div class="modal-dialog" role="document">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title" id="ContactModalLabel">作者へ</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+                </button>
+              </div>
+              <div class="modal-body">
+                <form action="https://docs.google.com/forms/d/e/1FAIpQLSeFOneYAejrfWEDs_w3HZ4ZY7yxcbNSXax3rLYxGkb0UgQX0g/formResponse" method="POST" target="iframe_hidden" onSubmit="return check()">
+                  <span class=" glyphicon glyphicon-user">Name ※required</span>
+                  <div class="form-group">
+                    <input type="text" name="entry.1205454870" class="form-control" required>
+                  </div>
+                  <span class="glyphicon glyphicon-envelope">Email</span>
+                  <div class="form-group">
+                    <input type="email" name="entry.1410027005" class="form-control">
+                  </div>
+                  <span class=" glyphicon glyphicon glyphicon-pencil">Message ※required</span>
+                  <div class="form-group">
+                    <textarea name="entry.1685385619" class="form-control" rows="9" required id="Message"></textarea>
+                  </div>
+                  <p class="modalBody">返信が必要な場合はEmailを入力してください。返信できない場合もあります。</p>
+                  <div class="form-group">
+                    <button class="btn btn-primary" id="submit">
+                      Send
+                    </button>
+                  </div>
+                </form>
+                <iframe name="iframe_hidden"></iframe>
+              </div>
+            </div>
+          </div>
+        </div>
+        <span class="b">・</span>
+        <a href="https://crew-pn.usjc.co.jp/cws/mbl/Menu-1" target="_blank">モバイル</a>
+        <br>
+        <small>Copyright &copy; 2017 Naoki Iwasa All Rights Reserved.<br>last updated at 2017.10.12 v.1.1.5</small>
+</footer>
+<!-- /footer -->
+
+
+<!-- WORKTIME LIST MODAL -->
+<div class="modal fade" id="listWTModal" tabindex="1" role="dialog">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">勤務時間リスト</h5>
+        <button type="button" class="close" data-dismiss="modal">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+      	<p class="text-secondary" id="wtListModalTitle">{mo}月の勤務時間リストです。</p>
+      	<div id="wtlist">
+      		<div class="pointer" onclick="$('#editWTModal').modal()">
+      			<div><strong>{Y}/{mo}/{d} ({dy})</strong></div>
+      			<div>勤務時間: {s}-{f}</div>
+      			<div>実働時間: {act}h</div>
+      		</div>
+      	</div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">閉じる</button>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- /WORKTIME LIST MODAL -->
+
+
+
+
+<!-- EDIT WORKTIME MODAL -->
+<div class="modal fade" id="editWTModal" tabindex="0" role="dialog">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">勤務時間を編集</h5>
+        <button type="button" class="close" data-dismiss="modal">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+      	<p class="text-secondary">勤務時間を編集します。</p>
+        <div class="form-group">
+          <input type="text" class="form-control alert" id="editModal_date" readonly="">
+        </div>
+        <div id="editModal_repeat" data-key="1960/5/10">
+          <div>
+            <div class="input-group" style="margin-bottom: .5em" role="start">
+              <div class="input-group-addon">開始時刻</div>
+              <select data-opt="hour" class="form-control"></select>
+              <div class="input-group-addon">時</div>
+              <select data-opt="min" class="form-control"></select>
+              <div class="input-group-addon">分</div>
+            </div>
+            <div class="input-group" role="finish">
+              <div class="input-group-addon">終了時刻</div>
+              <select data-opt="hour" class="form-control"></select>
+              <div class="input-group-addon">時</div>
+              <select data-opt="min" class="form-control"></select>
+              <div class="input-group-addon">分</div>
+            </div>
+          </div>
+          <div id="wt_repetition">
+            <!--2つ以上勤務時間がある場合、上のdivをここにclone -->
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-primary" onclick="editWTWithModal()">保存</button>
+        <button type="button" class="btn btn-outline-secondary" data-dismiss="modal" onclick="$('#listWTModal').modal()">キャンセル</button>
+        <button type="button" class="btn btn-outline-danger" onclick="removeWTWithEditModal()">削除</button>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- /EDIT WORKTIME MODAL -->
+
+
+
+
+<!-- ADD WORKTIME MODAL -->
+<div class="modal fade" id="addWTModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">勤務時間を追加</h5>
+        <button type="button" class="close" data-dismiss="modal">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+      	<p class="text-secondary">新たに決まった勤務時間を追加します。</p>
+        <div class="form-group">
+          <input type="text" class="form-control flatpickr alert alert-info" id="addModal_date" placeholder="日付を選択" onchange="checkAddWtModalValidity()" style="max-width: 300px;">
+        </div>
+        <div class="input-group" style="margin-bottom: .5em">
+        	<div class="input-group-addon">開始時刻</div>
+          <select data-opt="hour" class="form-control" data-defval="12" id="addModal_sh" onchange="checkAddWtModalValidity()"></select>
+          <div class="input-group-addon">時</div>
+          <select data-opt="min" class="form-control" data-defval="0" id="addModal_sm" onchange="checkAddWtModalValidity()"></select>
+          <div class="input-group-addon">分</div>
+        </div>
+        <div class="input-group">
+        	<div class="input-group-addon">終了時刻</div>
+          <select data-opt="hour" class="form-control" data-defval="12" id="addModal_fh" onchange="checkAddWtModalValidity()"></select>
+          <div class="input-group-addon">時</div>
+          <select data-opt="min" class="form-control" data-defval="0" id="addModal_fm" onchange="checkAddWtModalValidity()"></select>
+          <div class="input-group-addon">分</div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" onclick="addWTWithModal(this)" id="addModal_submit">追加</button>
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">キャンセル</button>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- /ADD WORKTIME MODAL -->
+
+
+
+
+
+<!-- SETTINGS MODAL -->
+<div class="modal fade" id="settingsModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">設定</h5>
+        <button type="button" class="close" data-dismiss="modal">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+      	<p class="text-secondary">設定は自動的に保存されます。</p>
         <div>
-        <table class="table">
+			  <label class="custom-control custom-checkbox mb-2 mr-sm-2 mb-sm-0">
+			    <input type="checkbox" class="custom-control-input" id="delete_checkbox" saveonchange autoload>
+			    <span class="custom-control-indicator"></span>
+			    <span class="custom-control-description">勤務時間の削除時に警告を表示しない</span>
+        </label>
+        </div>
+        <div>
+			    <label class="custom-control custom-checkbox mb-2 mr-sm-2 mb-sm-0">
+			     <input type="checkbox" class="custom-control-input" id="override_checkbox" checked saveonchange autoload>
+			     <span class="custom-control-indicator"></span>
+			     <span class="custom-control-description">半月分のデータを入力するときに、前にあったその期間のデータは全て削除する。</span>
+          </label>
+        </div>
+        <div>
+        <label class="custom-control custom-checkbox mb-2 mr-sm-2 mb-sm-0">
+          <input type="checkbox" class="custom-control-input" id="inter_term_checkbox" checked saveonchange autoload>
+          <span class="custom-control-indicator"></span>
+          <span class="custom-control-description">複数期間のデータを入力</span>
+        </label>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- /SETTINGS MODAL -->
+
+
+
+
+
+<!-- ROUTE SETTING MODAL -->
+<div class="modal fade" id="routeModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">経路設定</h5>
+        <button type="button" class="close" data-dismiss="modal">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body" style="padding-top: 0;padding-bottom: 0">
+        <table class="table" style="margin-bottom: 0">
             <tr>
-                <th>発着地設定</th>
-                <td>
-                    <div class="form-inline">
-                        勤務時間の
-                        <input type="text" id="yttime" placeholder="例: 30" class="form-control" size="2">分前に
-                        <input type="text" id="ytfrom" placeholder="例: 学研北生駒" class="form-control" size="10">から
-                        <input type="text" id="ytto" placeholder="例: 大正" value="桜島" class="form-control" size="10">に
-                        <input type="text" id="ytvia" placeholder="例: 谷町四丁目" class="form-control" size="10">経由で到着する経路を検索 <small style="color: #777">(経由は任意、コンマ','で区切って3つまで複数追加)</small>
+                <th style="min-width: 100px;border-top: none;">発着地設定</th>
+                <td style="border-top: none;">
+                    <div class="form-inline form-inline-input">
+                        <p>
+                          <span>勤務時間の</span>
+                          <input type="number" id="yttime" placeholder="" class="form-control form-control-sm" style="max-width: 70px" onkeyup="checkTransitModalValidity()" onchange="checkTransitModalValidity()">
+                          <span>分前に</span>
+                          <input type="text" id="ytfrom" placeholder="例: 学研北生駒" class="form-control form-control-sm" style="min-width: 100px" onkeyup="checkTransitModalValidity()">
+                          <span>から</span>
+                          <input type="text" id="ytto" placeholder="例: 桜島" value="桜島" class="form-control form-control-sm" style="min-width: 100px" onkeyup="checkTransitModalValidity()">
+                          <span>に</span>
+                          <input type="text" id="ytvia" placeholder="例: 谷町四丁目" class="form-control form-control-sm" style="min-width: 100px">
+                          <span>経由で到着する経路を検索</span>
+                        </p>
+                        <p style="margin:0;">
+                          <span style="color: #777;font-size: .8em;">
+                            経由は任意、コンマ','で区切って3つまで複数追加<br>
+                          希望と違う駅が表示される際は県名や路線名を入れて調整して下さい。
+                          </span>
+                        </p>
                     </div>
                 </td>
             </tr>
@@ -150,30 +451,36 @@ you cannot:
                 <th>交通手段</th>
                 <td>
                     <div class="checkbox">
-                        <label>
-                            <input type="checkbox" value="" id="al_checkbox">
-                            空路
-                        </label>
-                        <label>
-                            <input type="checkbox" value="" id="shin_checkbox">
-                            新幹線
-                        </label>
-                        <label>
-                            <input type="checkbox" value="" id="ex_checkbox">
-                            有料特急
-                        </label>
-                        <label>
-                            <input type="checkbox" value="" id="hb_checkbox">
-                            高速バス
-                        </label>
-                        <label>
-                            <input type="checkbox" value="" id="lb_checkbox" checked="">
-                            路線/連絡バス
-                        </label>
-                        <label>
-                            <input type="checkbox" value="" id="sr_checkbox">
-                            フェリー
-                        </label>
+						<label class="custom-control custom-checkbox mb-2 mr-sm-2 mb-sm-0">
+						    <input type="checkbox" class="custom-control-input" id="al_checkbox">
+						    <span class="custom-control-indicator"></span>
+						    <span class="custom-control-description">空路</span>
+			            </label>
+						<label class="custom-control custom-checkbox mb-2 mr-sm-2 mb-sm-0">
+						    <input type="checkbox" class="custom-control-input" id="shin_checkbox">
+						    <span class="custom-control-indicator"></span>
+						    <span class="custom-control-description">新幹線</span>
+			            </label>
+						<label class="custom-control custom-checkbox mb-2 mr-sm-2 mb-sm-0">
+						    <input type="checkbox" class="custom-control-input" id="ex_checkbox">
+						    <span class="custom-control-indicator"></span>
+						    <span class="custom-control-description">有料特急</span>
+			            </label>
+						<label class="custom-control custom-checkbox mb-2 mr-sm-2 mb-sm-0">
+						    <input type="checkbox" class="custom-control-input" id="hb_checkbox">
+						    <span class="custom-control-indicator"></span>
+						    <span class="custom-control-description">高速バス</span>
+			            </label>
+						<label class="custom-control custom-checkbox mb-2 mr-sm-2 mb-sm-0">
+						    <input type="checkbox" class="custom-control-input" id="lb_checkbox" checked="">
+						    <span class="custom-control-indicator"></span>
+						    <span class="custom-control-description">路線/連絡バス</span>
+			            </label>
+						<label class="custom-control custom-checkbox mb-2 mr-sm-2 mb-sm-0">
+						    <input type="checkbox" class="custom-control-input" id="sr_checkbox">
+						    <span class="custom-control-indicator"></span>
+						    <span class="custom-control-description">フェリー</span>
+			            </label>
                     </div>
                 </td>
             </tr>
@@ -182,1044 +489,433 @@ you cannot:
                 <td>
                     <div class="form-inline">
                         <select id="display_sel" class="form-control" style="max-width:12em;">
-                            <option selected="">到着が早い順</option>
-                            <option>乗り換え回数順</option>
-                            <option>料金が安い順</option>
+                            <option value="0">到着が早い順</option>
+                            <option value="2">乗り換え回数順</option>
+                            <option value="1">料金が安い順</option>
                         </select>
                     </div>
                 </td>
             </tr>
-            <!--
             <tr>
-                <th>経路URL</th>
+                <th>歩く速さ</th>
                 <td>
-                    <div class="form-inline">経路のURLを使用して、経路を限定する <input type="text" placeholder="URLを貼り付け..." id="yturl" class="form-control disabled" size="45" disabled=""></div>
+                    <div class="form-inline">
+                        <select id="ws_sel" class="form-control" style="max-width:12em;">
+							           <option value="1" >急いで</option>
+							           <option value="2" >少し急いで</option>
+							           <option value="3">少しゆっくり</option>
+							           <option value="4" >ゆっくり</option>
+                        </select>
+                    </div>
                 </td>
-            </tr>
-            -->
-            <tr>
-                <td>
-                    <button id="saveTransit" type="button" class="btn btn-primary">経路を保存</button>
-                </td>
-                <td></td>
             </tr>
         </table>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" id="editModalSubmit" onclick="routeSettingsWithModal(this)">保存</button>
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">キャンセル</button>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- /ROUTE SETTING MODAL -->
 
-        <div style="margin-bottom: 5em;margin-top: 3em;">
-            <div class="checkbox">
-                <label>
-                    <input type="checkbox" value="" id="delete_checkbox">
-                    表のコラムの削除時に警告を表示しない
+
+
+
+<!-- SALARY SETTING MODAL -->
+<div class="modal fade" id="salarySettingModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">給与概算設定</h5>
+        <button type="button" class="close" data-dismiss="modal">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body" style="padding-bottom: 0">
+        <p class="text-secondary">給与概算の設定を行います。</p>
+        <table class="table" style="margin-bottom: 0">
+          <tbody>
+            <!--<tr>
+              <th>期間</th>
+              <td class="form-group">
+                <select id="term" class="form-control" style="max-width: 200px" autoload></select>
+              </td>
+            </tr>-->
+            <tr>
+              <th style="min-width: 100px;">時給</th>
+              <td class="form-group form-inline" style="margin-bottom: 0">
+                <input type="number" class="form-control" id="hourWage" style="max-width:10em;margin-right: .8em" autoload onchange="checkSalarySettingValidity();">円
+              </td>
+            </tr>
+            <tr>
+              <th>交通費</th>
+              <td class="form-group">
+                <div class="form-inline">
+                  <input type="number" class="form-control" id="trans" style="max-width:10em;margin-right: .8em" autoload onchange="checkSalarySettingValidity();">円
+                </div>
+                <p class="form-group form-inline" id="forRegular" style="margin:.5em 0">
+                  支給月(どちらか一方)
+                  <select data-opt="month" class="form-control" style="margin:0 .8em;" id="fee_provide_month" autoload onchange="checkSalarySettingValidity();"></select>
+                  <input type="number" class="form-control" id="six_month_fee" style="max-width:10em;" autoload onchange="checkSalarySettingValidity();">
+                  <small class="text-muted" style="margin-left:.8em;">
+                    6ヶ月の定期代を入力してください。
+                  </small>
+                </p>
+                <label class="custom-control custom-checkbox" style="margin: 0">
+                  <input type="checkbox" class="custom-control-input" onchange="transDisable(this);checkSalarySettingValidity();" name="highschool" autoload id="hs_student_checkbox">
+                  <span class="custom-control-indicator"></span>
+                  <span class="custom-control-description">私は高校生です。</span>
                 </label>
-            </div>
-            <div class="checkbox">
-                <label>
-                    <input type="checkbox" value="" id="delete_day_checkbox">
-                    勤務時間の削除時に警告を表示しない
-                </label>
-            </div>
-            <div class="checkbox">
-                <label>
-                    <input type="checkbox" value="" id="reset_checkbox" checked>
-                    追加後リセット
-                </label>
-            </div>
+              </td>
+            </tr>
+            <tr>
+              <th>雇用形態</th>
+              <td class="form-group">
+                <div class="employmentPattern">
+                  <div class="custom-controls-stacked d-block my-1">
+                    <label class="custom-control custom-radio">
+                      <input type="radio" value="0" name="employmentPattern" id="regular" class="custom-control-input" autoload onchange="$('#forRegular').fadeIn();checkSalarySettingValidity();"><!--どうやらcheckが入ったときのみonchangeは発火。コレを使う-->
+                      <span class="custom-control-indicator"></span>
+                      <span class="custom-control-description">Regular</span>
+                    </label>
+                    <label class="custom-control custom-radio">
+                      <input type="radio" value="1" name="employmentPattern" id="casular" class="custom-control-input" onchange="$('#forRegular').fadeOut();checkSalarySettingValidity();">
+                      <span class="custom-control-indicator"></span>
+                      <span class="custom-control-description">Casular</span>
+                    </label>
+                    <label class="custom-control custom-radio">
+                      <input type="radio" value="2" name="employmentPattern" id="casual" class="custom-control-input" onchange="$('#forRegular').fadeOut();checkSalarySettingValidity();">
+                      <span class="custom-control-indicator"></span>
+                      <span class="custom-control-description">Casual</span>
+                      </label>
+                    <label class="custom-control custom-radio">
+                      <input type="radio" value="3" name="employmentPattern" id="seasonal" class="custom-control-input" onchange="$('#forRegular').fadeOut();checkSalarySettingValidity();">
+                      <span class="custom-control-indicator"></span>
+                      <span class="custom-control-description">Seasonal</span>
+                    </label>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" onclick="saveSalarySettingWithModal(this)" id="salary_submit">保存</button>
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">キャンセル</button>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- /SALARY SETTING MODAL -->
+
+
+
+
+
+<!-- CALC SARALY MODAL -->
+<div class="modal fade" id="calcSalaryModal" tabindex="1" role="dialog">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">給与概算</h5>
+        <button type="button" class="close" data-dismiss="modal">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body" style="padding-bottom: 0">
+        <p class="text-secondary">給与の概算の結果を表示します。</p>
+        <p class="text-danger">皆さんの給与を保証するものではありません。</p>
+        <table class="table" style="margin-bottom: 0">
+          <tbody id="calcSalaryTbody">
             <!--
-            <div style="margin-top: 4em">
-                <p><strong>経路を限定するためのURLについて</strong></p>
-                <p>目的地まで行くのに複数の経路があって、ある一つの経路だけを表示したい場合に、下記の方法でURLをコピーし貼り付ければ、そのルートだけを表示できます。</p>
-                <div><a href="src/urlusage.jpg"><img src="src/urlusage.jpg" alt="urlusage.jpg" class="img-thumbnail" style="width:100%;max-width:600px;"></a></div>
-            </div>
-            -->
-        </div>
+            <tr>
+              <td>{Y}年{mo}月</td>
+              <td class="monthData" onclick="toggleSalary(this)">
+                <span style="text-decoration: underline;">差引支給額: 112,595円</span><br>
+                <small>クリックすると詳細を表示。</small>
+                <div style="display: none">ここに1ヶ月の詳細データ</div>
+              </td>
+            </tr>
+          -->
+          </tbody>
+        </table>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">閉じる</button>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- /CALC SARALY MODAL -->
 
-        <div class="json">
-            <h4>バックアップ用</h4>
-            <p>下のtextareaには上のデータがjson形式で表示されます。これをどこかのファイルで保存・共有しておくと、ブラウザが変わったりデバイスが変わってもデータを引き継ぐことができます。</p>
-            <textarea id="json_textarea" rows="7" class="form-control" placeholder="" onclick="this.focus();this.select()" readonly="readonly"></textarea>
 
-            <div class="checkbox">
-                <label>
-                    <input type="checkbox" value="" id="json_checkbox">
-                    JSONを整理して表示
-                </label>
-            </div>
-            <br>
-            <textarea id="json_input_textarea" rows="3" class="form-control" placeholder="データが消えたとき用、バックアップのjsonから読み込み..."></textarea><br>
-            <div style="margin-bottom: 6em">
-                <button class="btn btn-default" type="submit" id="json_submit">Submit</button>
-            </div>
-        </div>
-        <p>powered by <a href="http://getbootstrap.com/">bootstrap</a></p>
-    </div> <!-- /container -->
 
-<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
-</body>
+
+<script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://npmcdn.com/flatpickr/dist/l10n/ja.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.11.0/umd/popper.min.js" integrity="sha384-b/U6ypiBEHpOf/4+1nzFpr53nxSS+GLCkfwBdFNTxtclqqenISfwAzpKaMNFNmj4" crossorigin="anonymous"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/js/bootstrap.min.js" integrity="sha384-h0AbiXch4ZDo7tp9hKZ4TsHbi047NrKGLO3SEJAg45jXxnGIfYzk4Si90RDIqNm1" crossorigin="anonymous"></script>
+
+<script type="text/javascript" src="workaholic_util.js"></script>
+<script type="text/javascript" src="worktimelib.js"></script>
+<script type="text/javascript" src="workaholic.js"></script>
+
 <script type="text/javascript">
-var hhmmformformat = '<div class="input-group"><div class="input-group-addon">開始時刻</div>{0}<div class="input-group-addon">時</div>{1}<div class="input-group-addon">分</div></div><div class="input-group"><div class="input-group-addon">終了時刻</div>{2}<div class="input-group-addon">時</div>{3}<div class="input-group-addon">分</div></div>';
-/*
- * 使用するlocalStorage
- *  - data                  :  theYggdrasilをstring化したもの
- *  - json_checkbox         :  チェックボックスがcheckedであるなら1
- *  - delete_checkbox       :  同上
- *  - delete_day_checkbox   :  同上
- */
-theYggdrasil = {};
-/*
- * theYggdrasil(全部のデータを格納するobj)の構造は
- * 
- * {
- *   - "2017.8.0" : 8月上半期の勤務obj
- *   - "2017.8.1" : 8月下半期の勤務obj
- *   - "2017.9.0" : 9月上半期の勤務obj
- *   - ...
- * }
- */
-// 半月の勤務履歴を開いているか否か。
-// showingTerm === ($2("#showTerm").display === 'none') -> true
-showingTerm = false;
-showingEdit = false;
-// 実行日のdate obj。 
-// 年月日だけわかればいい
-today = new Date();
-today = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-/*
- * チェックボックスの初期化とイベントハンドラ登録。
- */
-function initCheckboxAttr() {
-    var checkboxIds = ["json_checkbox", "delete_checkbox", "delete_day_checkbox", "reset_checkbox", "al_checkbox", "shin_checkbox", "ex_checkbox", "hb_checkbox", "lb_checkbox", "sr_checkbox"];
-    for (var boxId of checkboxIds){
-        var node = $2("#" + boxId);
-        var item = localStorage.getItem(boxId);
-        if (item != null){
-            if (item === "1"){
-                node.checked = true;
-            } else {
-                node.checked = false;
-            }
-        }
-        // register onchange event handler
-        // チェックボックスの値が変化するたびに、チェックボックスをチェックしてデータをlocalStorageに格納。
-        node.onchange = function(e){
-            var data = e.srcElement.checked ? "1" : "0";
-            localStorage.setItem(e.srcElement.id, data);
-        }
-    }
+//flatpickrカレンダー(datepicker)の初期化
+flatpickr.localize(flatpickr.l10ns.ja);
+$(".flatpickr").flatpickr(FLATPICKR_OPTION_FROMTODAY);
+
+//bodyがloadされたときに発火
+function init() {
+	//localStorageがオフまたは非対応の場合、cookieを用いて擬似的にlocalStorageを作成
+	checkCompatibility();
+
+	//時間(HH:MM-HH:MM)のselectにoptionを追加。この1回のみ実行される。data-opt=hour/minじゃないとなにもしない。
+	//data-defvalを指定すると初期値を決められる。
+	makeTimeOptions();
+
+	//テキストボックスなどの値をLocalStorageから復元
+	initFormData();
+  transDisable(document.getElementById('hs_student_checkbox'));
+  checkSalarySettingValidity();
+
+	//checkboxとselectが前回から復元できるよう、変更時にLocalStorageに保存するようにするハンドラを登録する。
+	//saveonchange属性があるものにのみ適用される
+	//textboxなどは、buttonを押したときに保存すべきなので、buttonクリック時などに
+	// saveTextboxData($(this));
+	//といったふうにする。
+	//自動で読み込む場合別途autoload属性が必要
+	registerAutosave();
+
+	//もし古い形式のデータしかなければ、新しい形式に直してLocalStorageに保存してやる。
+	translate();
+
+	//LocalStorageに保存した勤務時間オブジェクト配列データの解析して、wtArrayに格納。
+	loadWtArrayFromLS();
+
+	//テーブルに反映。init時はフェードインしたくないのでtrue
+	refresh(true);
 }
-function initTextboxAttr(){
-    var ids = ["yttime", "ytfrom", "ytto", "ytvia"];
-    for (var boxId of ids){
-        var node = $2("#" + boxId);
-        var item = localStorage.getItem(boxId);
-        if (item != null && item != ""){
-            node.value = item;
-        }
-    }
-    var item2 = localStorage.getItem("display_sel");
-    if (item != null && item != ""){
-        $2("#display_sel").selectedIndex = parseInt(item2);
-    }
-    $2("#saveTransit").onclick = function(e){
-        for (var boxId of ids){
-            localStorage.setItem(boxId, $2("#" + boxId).value)
-        }
-        localStorage.setItem("display_sel", $2("#display_sel").selectedIndex);
-        buildTableContent();
-        printSuccess('経路設定を保存しました。')
-    }
+
+//テキストエリアから情報を抽出する。
+function addWTWithTA() {
+	//TextAreaから情報を取得 (ミスってたら空の配列が返ってくる)
+	var taWtArray = interpreteTA();
+	if (taWtArray.length == 0) {
+		message('テキストエリアに正しいデータを入力してください。', 'danger');
+		return;
+	}
+	addAllWithTA(taWtArray);
+  var title;
+  if ($('#inter_term_checkbox').prop('checked')){
+    title = taWtArray[0].getDateString('{Y}年{mo}月{half}', true)+'から'+taWtArray[taWtArray.length-1].getDateString('{Y}年{mo}月 {half}', true)+'まで';
+  } else {
+    title = taWtArray[0].getDateString('{Y}年{mo}月{half}', true);
+  }
+  message(title+'の勤務時間を読み込みました。'+UNDO_HTML_TEMPLATE, 'success');
+  refresh();
 }
-/*
- * bodyが読み込まれたときに発火する関数。
- */
-function bodyLoadEvent() {
-    initCheckboxAttr();
-    initTextboxAttr();
-    $2('#termBack').onclick = function(e){
-        if (showingTerm){
-            hideTerm();
-        }
-    };
-    $2('#editBack').onclick = function(e){
-        if (showingEdit){
-            hideEdit();
-        }
-    };
-    $2('#showTerm').onclick = function(e){
-        e.stopPropagation();
-    };
-    $2('#editWorktime').onclick = function(e){
-        e.stopPropagation();
-    };
-    // shift_submitエレメントにonclick属性を追加。(イベントハンドラを登録)
-    $2('#shift_submit').onclick = function(){
-        extractData();
-    };
-    $2('#json_submit').onclick = function(){
-        theYggdrasil = JSON.parse($2('#json_input_textarea').value);
-        saveData();
-    };
-    $2('#add_submit').onclick = function(){
-        initAddWorktime();
-    };
-    var local_data = localStorage.getItem("data");
-    if (local_data != null) {
-        if ($2('#json_checkbox').checked){
-            $2('#json_textarea').value = JSON.stringify(JSON.parse(local_data), null, "    ");
-        } else {
-            $2('#json_textarea').value = local_data;
-        }
-        theYggdrasil = JSON.parse(local_data);
-        buildTableContent();
+
+//開いてるrouteModalからデータをLSに保存。取り出すときは、各要素のidをkeyにしてLSから。
+function routeSettingsWithModal(btnElem){
+  if ($(btnElem).prop('disabled')) return;
+
+  saveTextboxData($('#routeModal input[type=number]'));
+  saveTextboxData($('#routeModal input[type=text]'));
+  saveCheckboxData($('#routeModal input[type=checkbox]'));
+  saveSelectData($('#routeModal select'));
+  message('経路設定を保存しました', 'success');
+  refresh();
+  $('#routeModal').modal('hide');
+}
+
+function addWTWithModal(btnElem){
+  if ($(btnElem).prop('disabled')) return;
+
+  var s_date = new Date($('#addModal_date').val());
+  var f_date = new Date($('#addModal_date').val());
+
+  s_date.setHours(parseInt($('#addModal_sh').val()), parseInt($('#addModal_sm').val()));
+  f_date.setHours(parseInt($('#addModal_fh').val()), parseInt($('#addModal_fm').val()));
+
+  if (addOneWt(new Worktime(s_date, f_date))){
+    message('新しい勤務時間を追加しました。'+UNDO_HTML_TEMPLATE, 'success');
+    refresh();
+  };
+
+  $('#addWTModal').modal('hide');
+
+  $('#addModal_date').removeClass('fpickr-valid');
+  $('#addModal_date').addClass('fpickr-invalid');
+  $('#addModal_date').val('');
+  $('#addModal_sh').val('12');
+  $('#addModal_sm').val('0');
+  $('#addModal_fh').val('12');
+  $('#addModal_fm').val('0');
+}
+
+function editWTWithModal() {
+  var daykey = $('#editModal_date').val();
+  removeWorktimes(daykey, false);
+  $('#editModal_repeat').children().each(function(){
+    var wt = getWtFromSels(daykey, $(this));
+    if (wt != null) {
+      addOneWt(wt, true);
     }
+  });
+  message(daykey+'のデータを変更しました。'+UNDO_HTML_TEMPLATE, 'success');
+  refresh();
+  $('#editWTModal').modal('hide');
 }
-/*
- * ある日の勤務時間objのArrayに、新しい仲間を加える。
- * もしもどれかの勤務時間と連続してる一連の時間だったならmerge。
- */
-function pushWorktime(shifts, sh, sm, fh, fm){
-    var start = {"hour": sh, "min": sm};
-    var finish = {"hour": fh, "min": fm};
-    var _obj = {"start": start, "finish": finish};
-    var count = 0;
-    var _shifts = [];
-    var merged = false;
-    for (var shift of shifts){
-        if (!merged && timeEquals(shift["finish"], start)){
-            _shifts.push({"start": shift["start"], "finish": finish})
-            merged = true;
-        } else if (!merged && timeEquals(shift["start"], finish)){
-            _shifts.push({"start": start, "finish": shift["finish"]})
-            merged = true;
-        } else {
-            _shifts.push(shift);
-        }
-    }
-    if (!merged){
-        _shifts.push({"start": start, "finish": finish})
-    }
-    _shifts.sort(function(a,b){
-        var a_h = a["start"]["hour"];
-        var a_m = a["start"]["min"];
-        var b_h = b["start"]["hour"];
-        var b_m = b["start"]["min"];
-        if (a_h > b_h) return 1; 
-        if (a_h < b_h) return -1; 
-        if (a_m > b_m) return 1; 
-        if (a_m < b_m) return -1; 
-        return 0;
-    });
-    return _shifts;
-}
-function larger(time1, time2){
-    if (time1["hour"] > time2["hour"]){
-        return time1;
-    } else if (time1["hour"] < time2["hour"]){
-        return time2;
-    } else if (time1["min"] > time2["min"]){
-        return time1;
-    } else {
-        return time2;
-    }
-}
-/*
- * 2つの時間HH/MMが一致するかを返すだけの関数。
- */
-function timeEquals(time1, time2){
-    return time1["hour"] === time2["hour"] && time1["min"] === time2["min"];
-}
-/*
- * テキストエリアの内容を解釈してJSON化・table化する。
- */
-function extractData(){
-    ////////この関数のみの変数(var宣言をつける。本当は変数名がかぶらないならいらない。)で、for-loopの外に置いときたい組////////
-    var rowValue = $2('#shift_textarea').value;
-    var lines = rowValue.split('\n');
-    var theDay = "";
-    var theWorktime = [] // 勤務時間を格納するArray(数がわからず複数個ありうるのでArray)
-    var theWorkingTree = {"modified": makeDateString(today, '{0}/{1}/{2}')}; // 半期のデータ記録を格納するObject
-    var isFirstHalf = null;
-    var theMonth = null;
-    var theYear = null;
-    ///////////lineごとの処理///////////
-    for (var line of lines) {
-        var dayMatch = line.match(/\d+\/\d+(?=\([月火水木金土日]\))/g); 
-        // Array<String> matches
-        // ["8/14"] or null
-        if (dayMatch != null && dayMatch.length == 1){
-            // この行が8/14(金)[確定]とか書いてある行
-            if (theWorktime.length > 0){
-                // すでに今までに11:30-22:15とかがあった
-                theWorkingTree[theDay] = theWorktime;
-                // ツリーに保存 (まだtheDayは前のループ時のtheDay)
-                theWorktime = [];
-                // 一時データは消去
-            }
-            theDay = addYearToDay(dayMatch[0]); // "2017/8/14"
-            // theDayを更新(次への布石)
-            if (isFirstHalf == null){
-                var _d = new Date(theDay);
-                isFirstHalf = _d.getDate() <= 15;
-                theMonth = _d.getMonth() + 1;
-                theYear = _d.getFullYear();
-            }
-        }
-        timeMatch = line.match(/(\d+):(\d+)-(\d+):(\d+)/);
-        // Array<String> matches
-        // ["11:30-12:30", "11", "30", "12", "30"]
-        if (timeMatch != null){
-            //この行が11:30-20:15とか書いてある行
-            var sh = parseInt(timeMatch[1]);
-            var sm = parseInt(timeMatch[2]);
-            var fh = parseInt(timeMatch[3]);
-            var fm = parseInt(timeMatch[4]);
-            if (fh < sh || (fh === sh && fm < sm)){
-                fh += 24;
-            }
-            theWorktime = pushWorktime(theWorktime, sh, sm, fh, fm);
-        }
-    }
-    ///////////end: lineごとの処理///////////
-    // ループ後の未完の処理
-    if (theWorktime.length > 0){
-        theWorkingTree[theDay] = theWorktime;
-        theWorktime = [];
-    }
-    /////////////////line処理完了//////////////////
-    if (theYear == null){
-        // inputされたデータががおかしかった
-        return;
-    }
-    var _postfix = isFirstHalf ? "0" : "1"; // 前半なら0, 後半なら1
-    var _title = theYear + "." +theMonth + "." + _postfix;  //2017.8.0 = 2017年8月前半
-    theYggdrasil[_title] = theWorkingTree;
-    saveData();
-    // textareaの内容をリセット
-    $2('#shift_textarea').value = '';
-}
-/*
- * jsonの読み取り専用textareaの値を更新し、テーブルの内容を更新し、localStorageにデータを保存する3つの作業をまとめた関数。
- */
-function saveData() {
-    // JSONを整理して表示
-    if ($2('#json_checkbox').checked){
-        $2('#json_textarea').value = JSON.stringify(theYggdrasil, null, "    ");
-    } else {
-        $2('#json_textarea').value = JSON.stringify(theYggdrasil);
-    }
-    buildTableContent();
-    localStorage.setItem("data", JSON.stringify(theYggdrasil));
-}
-function buildTableContent() {
-    var theNearestDate = null; // 次の勤務dayのdateobj
-    var theNearestWorkTime = []; //次の勤務デイの勤務時間Array
-    var theSecNearestDate = null; // 次の勤務dayのdateobj
-    var theSecNearestWorkTime = []; //次の勤務デイの勤務時間Array
-    var nowMs = Date.now();
-    var keys = Object.keys(theYggdrasil);
-    // 並び替え (2017.8.0と2016.9.1など...)
-    keys.sort(function(a,b){
-        var _as = a.split("."); 
-        var _bs = b.split("."); 
-        if (parseInt(_as[0]) > parseInt(_bs[0])) return 1; 
-        if (parseInt(_as[0]) < parseInt(_bs[0])) return -1; 
-        if (parseInt(_as[1]) > parseInt(_bs[1])) return 1;
-        if (parseInt(_as[1]) < parseInt(_bs[1])) return -1;
-        if (parseInt(_as[2]) > parseInt(_bs[2])) return 1;
-        if (parseInt(_as[2]) < parseInt(_bs[2])) return -1;
-        return 0;
-    });
-    ////end: 並び替え////
-    var tableHtml = '<table class="table table-striped"><tr><th>#</th><th>期間</th><th>実働時間</th><th>作成日時</th></tr>';
-    // 半月毎の処理
-    // keysはtheYggdrasilのkey配列を並び替えたもの
-    for (var keyTerm of keys) {
-        if (!theYggdrasil.hasOwnProperty(keyTerm)) {
-            continue;
-        }
-        // 半月の勤務時間データ
-        var _WorkingTree = theYggdrasil[keyTerm];
-        // 拘束時間の合計
-        var wholeBondedMin = 0;
-        // 休憩時間の合計
-        var wholeRestMin = 0;
-        // 作成日時
-        var modifiedDay = "";
-        /*
-         * _WorkingTree(半期の勤務obj)の構造は
-         * 
-         * {
-         *   - "modified" : "2017/7/30"
-         *   - "2017/8/1" : [勤務時間Obj1, 勤務時間Obj2...]
-         *   - "2017/8/3" : [勤務時間Obj1, 勤務時間Obj2...]
-         *   ...
-         * }
-         */
-        for (var keyDay in _WorkingTree){
-            if (!_WorkingTree.hasOwnProperty(keyDay)){
-                continue;
-            }
-            // keyDayは"2017/8/1"系か"modified" (modifiedは一回だけ)
-            if (keyDay === "modified"){
-                modifiedDay = _WorkingTree[keyDay]; // "2017/7/30"とかが格納される
-            } else {
-                var shifts = _WorkingTree[keyDay]; // Array<Object> [勤務時間Obj1, 勤務時間Obj2...]
-                var dateObj = new Date(keyDay); // Date("2017/8/1")
-                dateObj.setHours(shifts[shifts.length-1]["start"]["hour"]);
-                dateObj.setMinutes(shifts[shifts.length-1]["start"]["min"]);
-                var _dtime = dateObj.getTime() - nowMs; // 現在との時間差ms
-                if (_dtime >= 0){
-                    if (theNearestDate == null){
-                        theNearestDate = dateObj;
-                        theNearestWorkTime = shifts;
-                    } else {
-                        if (_dtime < Math.abs(theNearestDate.getTime() - nowMs)){
-                            theNearestDate = dateObj;
-                            theNearestWorkTime = shifts;
-                        } else if (theSecNearestDate == null || _dtime < Math.abs(theSecNearestDate.getTime() - nowMs)){
-                            theSecNearestDate = dateObj;
-                            theSecNearestWorkTime = shifts;
-                        }
-                    }
-                }
-                for (var shift of shifts){
-                    // 拘束時間
-                    var bonded = getBondedMinute(shift);
-                    wholeBondedMin += bonded;
-                    wholeRestMin += getRestMin(bonded);
-                }
-            }
-        }
-        tableHtml += makeTrHtml(keyTerm, wholeBondedMin - wholeRestMin, modifiedDay);
-    }
-    tableHtml += '</table>'
-    var nextWorkHtml = '';
-    var secNextWH = '';
-    var advice = '';
-    if (theNearestDate != null) {
-        nextWorkHtml = '<div><h4>次の出勤日:</h4><p>{0} {1}</p></div>'.format(makeDateString(theNearestDate, '{1}/{2} ({3})'), makeWorktimeStringWithLink(theNearestDate, theNearestWorkTime));
-        advice = '<p style="margin:2em 0 3em 0;"><small>tips: 出勤時間をクリックすると、Yahoo路線で出勤の経路を検索できます。</small></p>'
-    }
-    if (theSecNearestDate != null) {
-        secNextWH = '<h4>その次: {0} {1}</h4>'.format(makeDateString(theSecNearestDate, '{1}/{2} ({3})'), makeWorktimeStringWithLink(theSecNearestDate, theSecNearestWorkTime));
-    }
-    tableHtml = nextWorkHtml + secNextWH + advice + tableHtml;
-    $2("#shift_table").innerHTML = tableHtml;
-}
-function makeYahooTransitURL(day, wt){
-    var timeinput = parseInt($2("#yttime").value);
-    if (isNaN(timeinput))　return '';
-    var frominput = encodeURI($2("#ytfrom").value);
-    if (frominput === '') return '';
-    var toinput = encodeURI($2("#ytto").value);
-    if (toinput === '') return '';
-    day.setHours(wt["start"]["hour"]);
-    day.setMinutes(wt["start"]["min"]);
-    var date = new Date(day.getTime() - timeinput * 60 * 1000)
-    var u = 'https://transit.yahoo.co.jp/search/result';
-    u += '?flatlon=';
-    u += '&from=' + encodeURI($2("#ytfrom").value);
-    u += '&tlatlon=';
-    u += '&to=' + encodeURI($2("#ytto").value);
-    var viainputs = $2("#ytvia").value.split(",")
-    if (viainputs.length >= 1) u += '&via=' + encodeURI(viainputs[0]);
-    if (viainputs.length === 2) u += '&via=' + encodeURI(viainputs[1]);
-    if (viainputs.length === 3) u += '&via=' + encodeURI(viainputs[2]);
-    u += '&y=' + date.getFullYear();
-    var suff = date.getMonth() < 9 ? '0' : '';
-    u += '&m=' + suff + (date.getMonth() + 1);
-    var suff2 = date.getDate() < 10 ? '0' : '';
-    u += '&d=' + suff2 + date.getDate();
-    u += '&hh=' + date.getHours();
-    var minutes = date.getMinutes() + '';
-    u += '&m2=' + minutes.charAt(1);
-    u += '&m1=' + minutes.charAt(0);
-    u += '&type=4'; // 到着時刻設定
-    u += '&ticket=ic';
-    if ($2("#al_checkbox").checked) u += '&al=1';
-    if ($2("#shin_checkbox").checked) u += '&shin=1';
-    if ($2("#ex_checkbox").checked) u += '&ex=1';
-    if ($2("vhb_checkbox").checked) u += '&hb=1';
-    if ($2("#lb_checkbox").checked) u += '&lb=1';
-    if ($2("#sr_checkbox").checked) u += '&sr=1';
-    var sigma = [0, 2, 1];
-    u += '&s=' + sigma[$2("#display_sel").selectedIndex];
-    u += '&expkind=1';
-    u += '&ws=3'; //少しゆっくり
-    u += '&kw=';
-    /*
-    var match_from = $2("#yturl").value.match(/from=([%A-Z1-9]+)/);
-    var match_to = $2("#yturl").value.match(/to=([%A-Z1-9]+)/);
-    if (match_from != null && match_to != null && match_from[1] === frominput && match_to[1] === toinput){
-        var match_mtf = $2("#yturl").value.match(/mtf=(\d+)/);
-        if (match_mtf != null){
-            u += '&mtf=' + match_mtf[1];
-        }
-    }*/
-    return u;
-}
-/*
- * 勤務時間objのArrayから"11:30-20:00"といったstringをつくる関数。
- */
-function makeWorktimeString(shifts) {
-    var r = '';
-    var c = 0;
-    for (var shift of shifts){
-        if (c > 0) r+= ', '
-        var _st = shift["start"];
-        var _fn = shift["finish"];
-        var _sth = _st["hour"];
-        var _stm = _st["min"];
-        var _fnh = _fn["hour"];
-        var _fnm = _fn["min"];
-        if (_stm  < 10) _stm = '0' + _stm;
-        if (_fnm < 10) _fnm = '0' + _fnm;
-        r += '{0}:{1}-{2}:{3}'.format(_sth,_stm,_fnh,_fnm);
-        c++;
-    }
-    return r;
-}
-function makeWorktimeStringWithLink(date, shifts) {
-    var r = '';
-    var c = 0;
-    for (var shift of shifts){
-        if (c > 0) r+= ', '
-        var _st = shift["start"];
-        var _fn = shift["finish"];
-        var _sth = _st["hour"];
-        var _stm = _st["min"];
-        var _fnh = _fn["hour"];
-        var _fnm = _fn["min"];
-        if (_stm  < 10) _stm = '0' + _stm;
-        if (_fnm < 10) _fnm = '0' + _fnm;
-        var transit = makeYahooTransitURL(date, shift);
-        var template = '{0}:{1}-{2}:{3}';
-        if (transit != ''){
-            template = '<a href="{4}" target="_new">{0}:{1}-{2}:{3}</a>';
-        }
-        r += template.format(_sth,_stm,_fnh,_fnm,transit);
-        c++;
-    }
-    return r;
-}
-/*
- * いろんな形式のdateから好きな形の日付Stringに変換する関数
- */
-function makeDateString(input, formatting){
-    const days = ["日","月","火","水","木","金","土"]
-    var dateObj;
-    if (typeof input === 'number'){
-        dateObj = new Date(input);
-    } else if (input instanceof Date){
-        dateObj = input;
-    } else if (typeof input === 'string'){
-        dateObj = new Date(input);
-    }
-    var year = dateObj.getFullYear();
-    var month = dateObj.getMonth() + 1;
-    var date = dateObj.getDate();
-    var day = days[dateObj.getDay()];
-    return formatting.format(year, month, date, day);
-}
-/*
- * 一覧tableのtrをつくる関数。
- * 
- * # |  期間   | 実働時間 |  作成日時
- * --+--------+---------+-----------
- * × | 8月前半 |  40.25  | 2017/7/30
- */
-function makeTrHtml(keyTerm, actualTime, modifiedDay) {
-    var _t  = '<tr>'
-    _t += '<td><img src="src/delete.svg" title="このデータを削除" class="delete" onclick="deleteTerm(\'{0}\')"></td>'.format(keyTerm);
-    _t += '<td title="詳しいデータを見る" class="hoverer" onclick="showTerm(\'{0}\')">{1}</td>'.format(keyTerm, parseKeyTerm(keyTerm));
-    _t += '<td>{0}</td>'.format(actualTime/60);
-    _t += '<td>{0}</td>'.format(modifiedDay);
-    _t += '</tr>';
-    return _t;
-}
-/*
- * "2017.8.0"とかの形式的な記述から"8月前半"という人が読みやすい文字列を返す関数。
- */
-function parseKeyTerm(keyTerm) {
-    var _ks = keyTerm.split(".");
-    var _post = _ks[2] == "0" ? "前半" : "後半";
-    return '{0}月{1}'.format(_ks[1], _post);
-}
-/*
- * 半月分のデータを消す関数。バツマークをクリックしたときに呼ばれる。
- */
-function deleteTerm(keyTerm){
-    if ($2('#delete_checkbox').checked || window.confirm("本当に"+parseKeyTerm(keyTerm)+"のデータを削除しますか?")){
-        delete theYggdrasil[keyTerm];
-        saveData();
-    }
-}
-/*
- * tableのタイトルの部分("8月前半"など)をクリックしたときに発火する関数
- * theYggdrasilから指定の半月分のデータを抜き出し表示。
- * buildTableContent()でも同じような処理があるが、ループ内の処理に若干の差異があるため統合はしない。
- */
-function showTerm(keyTerm) {
-    // 対象となる半月の勤務時間データ
-    var _WorkingTree = theYggdrasil[keyTerm];
-    var html = '<button type="button" class="close" aria-label="Close" id="hideTerm" onclick="hideTerm()"><span aria-hidden="true">&times;</span></button>'
-    //日付ごとに処理
-    /*
-     * _WorkingTreeの構造は、8月上半期なら
-     * 
-     * {
-     *   - "modified" : "2017/7/30"
-     *   - "2017/8/1" : [勤務時間Obj1, 勤務時間Obj2...]
-     *   - "2017/8/3" : [勤務時間Obj1, 勤務時間Obj2...]
-     *   ...
-     * }
-     */
-    var keys = Object.keys(_WorkingTree);
-    keys.sort(function(a,b){
-        var _as = a.split("/"); 
-        var _bs = b.split("/");
-        if (_as.length === 1) return 1;
-        if (_bs.length === 1) return -1;
-        if (parseInt(_as[2]) > parseInt(_bs[2])) return 1;
-        if (parseInt(_as[2]) < parseInt(_bs[2])) return -1;
-        return 0;
-    });
-    for (var keyDay of keys){
-        if (_WorkingTree.hasOwnProperty(keyDay)){
-            // 今回は作成日時はいらない
-            if (keyDay != "modified"){
-                // その日の勤務時間Array
-                var shifts = _WorkingTree[keyDay];
-                // その日の合計拘束時間
-                var alldaybonded = 0;
-                // その日の合計休憩時間
-                var alldayrest = 0;
-                // 勤務時間ブロックごとの処理
-                for (var shift of shifts){
-                    var bonded = getBondedMinute(shift);
-                    alldaybonded += bonded;
-                    alldayrest += getRestMin(bonded);
-                }
-                html += '<div class="block" onclick="edit(\'{3}\',\'{4}\')"><p><strong>{0}</strong></p><p>勤務時間: {1}</p><p>実働時間: {2}h</p></div>'.format(makeDateString(keyDay, '{0}/{1}/{2} ({3})'), makeWorktimeString(shifts), (alldaybonded-alldayrest)/60, keyDay, keyTerm);
-            }
-        }
-    }
-    $2("#showTerm").innerHTML += html;
-    $2("#termBack").style.display = 'block';
-    showingTerm = true;
-}
-function edit(keyDay, keyTerm){
-    var _WorkingTree = theYggdrasil[keyTerm];
-    var shifts = _WorkingTree[keyDay];
-    var html = '<h3>{0}の勤務時間の編集</h3>'.format(keyDay);
-    var hasel,hafsel,masel,mafsel;
-    for (var x = 0; x < shifts.length; x++) {
-        shift = shifts[x]
-        html += '<div style="margin-bottom:1em;">'
-        var hsel = '<select class="form-control" id="hsel">';
-        var hfsel = '<select class="form-control" id="hfsel">';
-        hasel = '<select class="form-control" id="hasel">';
-        hafsel = '<select class="form-control" id="hafsel">';
-        for (var i = 0; i < 31; i++){
-            var str = '<option>{0}</option>'.format(i);
-            var strSel = '<option selected>{0}</option>'.format(i);
-            if (shift["start"]["hour"] === i){
-                hsel += strSel;
-            } else {
-                hsel += str;
-            }
-            if (shift["finish"]["hour"] === i){
-                hfsel += strSel;
-            } else {
-                hfsel += str;
-            }
-            hasel += str;
-            hafsel += str;
-        }
-        hsel += '</select>';
-        hfsel += '</select>';
-        hasel += '</select>';
-        hafsel += '</select>';
-        var msel = '<select class="form-control" id="msel">';
-        var mfsel = '<select class="form-control" id="mfsel">';
-        masel = '<select class="form-control" id="masel">';
-        mafsel = '<select class="form-control" id="mafsel">';
-        for (var i = 0; i < 60; i += 15){
-            var j = i === 0 ? '00' : i+'';
-            var str = '<option>{0}</option>'.format(j);
-            var strSel = '<option selected>{0}</option>'.format(j);
-            if (shift["start"]["min"] === i){
-                msel += strSel;
-            } else {
-                msel += str;
-            }
-            if (shift["finish"]["min"] === i){
-                mfsel += strSel;
-            } else {
-                mfsel += str;
-            }
-            masel += str;
-            mafsel += str;
-        }
-        msel += '</select>';
-        mfsel += '</select>';
-        masel += '</select>';
-        mafsel += '</select>';
-        html += hhmmformformat.format(hsel, msel, hfsel, mfsel);
-        html += '<button class="btn btn-primary" type="submit" onclick="saveEdit(\'{0}\',\'{1}\', {2})">Save</button>'.format(keyDay, keyTerm, x);
-        html += '&nbsp;<button class="btn btn-danger" type="submit" onclick="removeEdit(\'{0}\',\'{1}\',{2})">Remove</button>'.format(keyDay, keyTerm, x);
-        html += '&nbsp;<button class="btn btn-default" type="submit" onclick="hideEdit()">Cancel</button>';
-        html += '</div>';
-    }
-    html += '&nbsp;<button class="btn btn-success" type="submit" onclick="toggleEdit(\'{0}\')">Add</button>'.format(keyDay);
-    html += '<div style="display:none" id="tog{0}" class="addEdit"><h4>勤務時間を追加</h4>'.format(keyDay);
-    html += hhmmformformat.format(hasel, masel, hafsel, mafsel);
-    html += '<button class="btn btn-primary" type="submit" onclick="addEdit(\'{0}\',\'{1}\')">勤務時間を追加</button>'.format(keyDay, keyTerm);
-    html += '</div>';
-    $2("#editWorktime").innerHTML = html;
-    $2("#editBack").style.display = 'block';
-    showingEdit = true;
-}
-function addWorktime(){
-    var year = $2("#yearaw").selectedIndex + today.getFullYear() - 1;
-    var month = $2("#monthaw").selectedIndex + 1;
-    var date = $2("#dateaw").selectedIndex + 1;
-    if (monthday(year, month) < date){
-        printError('日付が存在しない日付です!');
-        return;
-    }
-    var sh = $2("#asel").selectedIndex;
-    var sm = 15 * $2("#aselz").selectedIndex;
-    var fh = $2("#afsel").selectedIndex;
-    var fm = 15 * $2("#afselz").selectedIndex;
-    var wtobj = {"start":{"hour":sh,"min":sm},"finish":{"hour":fh,"min":fm}};
-    
-    var _postfix = date <= 15 ? '0' : '1';
-    var keyTerm = '{0}.{1}.{2}'.format(year, month, _postfix);
-    var keyDay = '{0}/{1}/{2}'.format(year, month, date);
-    if (!canAdd(keyTerm, keyDay, wtobj)){
-        printError('勤務時間が不正確または競合 ({0} {1})'.format(keyDay, makeWorktimeString([wtobj])));
-        return;
-    }
-    var shiftStr = '';
-    if (theYggdrasil.hasOwnProperty(keyTerm)){
-        if (theYggdrasil[keyTerm].hasOwnProperty(keyDay)){
-            shiftStr = makeWorktimeString(theYggdrasil[keyTerm][keyDay]);
-            theYggdrasil[keyTerm][keyDay] = pushWorktime(theYggdrasil[keyTerm][keyDay], sh, sm, fh, fm);
-        } else {
-            theYggdrasil[keyTerm][keyDay] = pushWorktime([], sh, sm, fh, fm);
-        }
-    } else {
-        var _wobj = {}
-        _wobj[keyDay] = pushWorktime([], sh, sm, fh, fm);
-        theYggdrasil[keyTerm] = _wobj;
-    }
-    theYggdrasil[keyTerm]["modified"] = makeDateString(today, '{0}/{1}/{2}');
-    saveData();
-    var shiftStr2 = makeWorktimeString(theYggdrasil[keyTerm][keyDay]);
-    printSuccess('勤務時間を追加しました。 {0}: {1} -> {2}'.format(keyDay, shiftStr, shiftStr2));
-    if ($2("#reset_checkbox").checked){
-        initAddWorktime();
-    }
-}
-function initAddWorktime(){
-    var year = today.getFullYear();
-    var month = today.getMonth() + 1;
-    var date = today.getDate();
-    var year_sel = '<select class="form-control" id="yearaw">';
-    year_sel += '<option>{0}</option>'.format(year - 1);
-    year_sel += '<option selected>{0}</option>'.format(year);
-    year_sel += '<option>{0}</option>'.format(year + 1);
-    year_sel += '</select>';
-    var month_sel = '<select class="form-control" id="monthaw">';
-    for (var i = 1;i < 13;i++){
-        if (i === month){
-            month_sel += '<option selected>{0}</option>'.format(i);
-        } else {
-            month_sel += '<option>{0}</option>'.format(i);
-        }
-    }
-    month_sel += '</select>';
-    var date_sel = '<select class="form-control" id="dateaw">';
-    for (var i = 1;i < 32; i++){
-        if (i === date){
-            date_sel += '<option selected>{0}</option>'.format(i);
-        } else {
-            date_sel += '<option>{0}</option>'.format(i);
-        }
-    }
-    date_sel += '</select>';
-    var asel = '<select class="form-control" id="asel">';
-    var afsel = '<select class="form-control" id="afsel">';
-    for (var i = 0; i < 31; i++){
-        if (i === 12){
-            asel += '<option selected>{0}</option>'.format(i);
-            afsel += '<option selected>{0}</option>'.format(i);
-        } else {
-            asel += '<option>{0}</option>'.format(i);
-            afsel += '<option>{0}</option>'.format(i);
-        }
-    }
-    asel += '</select>';
-    afsel += '</select>';
-    var aselz = '<select class="form-control" id="aselz">';
-    var afselz = '<select class="form-control" id="afselz">';
-    for (var i = 0; i < 60; i += 15){
-        var j = i === 0 ? '00' : i+'';
-        if (i === 0){
-            aselz += '<option selected>{0}</option>'.format(j);
-            afselz += '<option selected>{0}</option>'.format(j);
-        } else {
-            aselz += '<option>{0}</option>'.format(j);
-            afselz += '<option>{0}</option>'.format(j);
-        }
-    }
-    aselz += '</select>';
-    afselz += '</select>';
-    var html = '<h3>勤務時間の追加</h3><div class="input-group a">{0}<div class="input-group-addon">年</div>{1}<div class="input-group-addon">月</div>{2}<div class="input-group-addon">日</div></div>'.format(year_sel, month_sel, date_sel);
-    html += hhmmformformat.format(asel, aselz, afsel, afselz);
-    html += '<button class="btn btn-primary" type="submit" onclick="addWorktime()">Add</button> <button class="btn btn-default" type="submit" onclick="initAddWorktime()">Reset</button>';
-    $2("#addWorktime").innerHTML = html;
-}
-function monthday(year, month){
-    var lastday = new Array('', 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31);
-    if ((year % 4 == 0 && year % 100 != 0) || year % 400 == 0){
-        lastday[2] = 29;
-    }
-    return lastday[month];
-}
-function isLargerThan(time1, time2){
-    return time1["hour"] > time2["hour"] || (time1["hour"] === time2["hour"] && time1["min"] > time2["min"]);
-}
-function isLargerOrEqualTo(time1, time2){
-    return isLargerThan(time1, time2) || timeEquals(time1, time2);
-}
-function compatible(wt1, wt2){
-    if (timeEquals(wt1["start"], wt2["start"]) || timeEquals(wt1["finish"], wt2["finish"])){
-        return false;
-    } else if (isLargerThan(wt1["start"], wt2["start"])){
-        return isLargerOrEqualTo(wt1["start"], wt2["finish"]);
-    } else {
-        return isLargerOrEqualTo(wt2["start"], wt1["finish"]);
-    }
-}
-function canAdd(keyTerm, keyDay, wtobj){
-    return canSave(keyTerm, keyDay, wtobj, -1);
-}
-function canSave(keyTerm, keyDay, wtobj, exclude){
-    if (timeEquals(wtobj["start"], wtobj["finish"])){
-        return false;
-    }
-    if (!theYggdrasil.hasOwnProperty(keyTerm) || !theYggdrasil[keyTerm].hasOwnProperty(keyDay)){
-        return true;
-    }
-    var ar = theYggdrasil[keyTerm][keyDay];
-    for (var i = 0; i < ar.length; i++){
-        if (i === exclude) continue;
-        if (!compatible(ar[i], wtobj)){
-            return false;
-        }
-    }
-    return true;
-}
-function addEdit(keyDay, keyTerm){
-    var sh = $2("#hasel").selectedIndex;
-    var sm = 15 * $2("#masel").selectedIndex;
-    var fh = $2("#hafsel").selectedIndex;
-    var fm = 15 * $2("#mafsel").selectedIndex;
-    var wtobj = {"start":{"hour":sh,"min":sm},"finish":{"hour":fh,"min":fm}};
-    if (!canAdd(keyTerm, keyDay, wtobj)){
-        printError('勤務時間が不正確または競合 ({0} {1})'.format(keyDay, makeWorktimeString([wtobj])));
-        return;
-    }
-    var shiftStr = makeWorktimeString(theYggdrasil[keyTerm][keyDay]);
-    theYggdrasil[keyTerm][keyDay] = pushWorktime(theYggdrasil[keyTerm][keyDay], sh, sm, fh, fm);
-    theYggdrasil[keyTerm]["modified"] = makeDateString(today, '{0}/{1}/{2}');
-    hideEdit();
-    $2("#showTerm").innerHTML = '';
-    saveData();
-    showTerm(keyTerm);
-    var shiftStr2 = makeWorktimeString(theYggdrasil[keyTerm][keyDay]);
-    printSuccess('勤務時間を追加しました。 {0}: {1} -> {2}'.format(keyDay, shiftStr, shiftStr2));
-}
-function toggleEdit(keyDay){
-    var str = $2("#tog{0}".format(keyDay)).style.display;
-    if (str === 'none'){
-        $2("#tog{0}".format(keyDay)).style.display = 'block';
-    } else {
-        $2("#tog{0}".format(keyDay)).style.display = 'none';
-    }
-}
-function hideEdit(){
-    $2("#editWorktime").innerHTML = '';
-    $2("#editBack").style.display = 'none';
-    showingEdit = false;
-}
-function saveEdit(keyDay, keyTerm, x){
-    if (showingEdit){
-        var sh = $2("#hsel").selectedIndex;
-        var sm = 15 * $2("#msel").selectedIndex;
-        var fh = $2("#hfsel").selectedIndex;
-        var fm = 15 * $2("#mfsel").selectedIndex;
-        var wtobj = {"start":{"hour":sh,"min":sm},"finish":{"hour":fh,"min":fm}};
-        if (!canSave(keyTerm, keyDay, wtobj, x)){
-            printError('勤務時間が不正確または競合 ({0} {1})'.format(keyDay, makeWorktimeString([wtobj])));
-            return;
-        }
-        var shiftStr = makeWorktimeString([theYggdrasil[keyTerm][keyDay][x]]);
-        var newArray = [];
-        for (var i = theYggdrasil[keyTerm][keyDay].length - 1; i >= 0; i--) {
-            if (i != x){
-                newArray.push(theYggdrasil[keyTerm][keyDay][i]);
-            }
-        }
-        theYggdrasil[keyTerm][keyDay] = pushWorktime(newArray, sh, sm, fh, fm);
-        hideEdit();
-        $2("#showTerm").innerHTML = '';
-        saveData();
-        showTerm(keyTerm);
-        sm = sm == 0 ? '00' : sm + ''; 
-        fm = fm == 0 ? '00' : fm + ''; 
-        printSuccess('変更内容を保存しました。 {0}: {1} -> {2}'.format(keyDay, shiftStr, '{0}:{1}-{2}:{3}'.format(sh, sm, fh, fm)));
-    }
-}
-function printSuccess(massage){
-    $2("#success").innerHTML = massage + '<button type="button" class="close" aria-label="Close" onclick="vanishSuccess()"><span aria-hidden="true">&times;</span></button>';
-    $2("#success").style.display = 'block';
-}
-function vanishSuccess(){
-    $2("#success").style.display = 'none';
-    $2("#success").innerHTML = '';
-}
-function printError(massage){
-    $2("#error").innerHTML = massage + '<button type="button" class="close" aria-label="Close" onclick="vanishError()"><span aria-hidden="true">&times;</span></button>';
-    $2("#error").style.display = 'block';
-}
-function vanishError(){
-    $2("#error").style.display = 'none';
-    $2("#error").innerHTML = '';
-}
-function removeEdit(keyDay, keyTerm, x){
-    var shiftStr = makeWorktimeString([theYggdrasil[keyTerm][keyDay][x]]);
-    if ($2("#delete_day_checkbox").checked || window.confirm('本当に{0} {1}を削除しますか?'.format(keyDay, shiftStr))){
-        if (theYggdrasil[keyTerm][keyDay].length === 1){
-            delete theYggdrasil[keyTerm][keyDay];
-            if (Object.keys(theYggdrasil[keyTerm]).length == 1){
-                // modified のみになった場合
-                delete theYggdrasil[keyTerm];
-            }
-        } else {
-            var newArray = [];
-            for (var i = theYggdrasil[keyTerm][keyDay].length - 1; i >= 0; i--) {
-                if (i != x){
-                    newArray.push(theYggdrasil[keyTerm][keyDay][i]);
-                }
-            }
-            theYggdrasil[keyTerm][keyDay] = newArray;
-        }
-    }
-    hideEdit();
-    $2("#showTerm").innerHTML = '';
-    saveData();
-    showTerm(keyTerm);
-}
-/*
- * 半月の勤務時間一覧を消す関数。
- */
-function hideTerm(){
-    $2("#showTerm").innerHTML = '';
-    $2("#termBack").style.display = 'none';
-    showingTerm = false;
-}
-/*
- * min以上max未満であればtrue
- */
-function isin(num, min, max){
-    return num >= min && num < max;
-}
-/*
- * 拘束時間から休憩時間を求める関数。
- *  4.5 -  6.0 -> 0.50
- *  6.0 -  7.0 -> 0.75
- *  7.0 - 12.0 -> 1.00
- * 12.0 -      -> 2.00
- */
-function getRestMin(bondedMin) {
-    var restMin = 0;
-    if (isin(bondedMin, 270, 360)){ //4.5h - 6h
-        restMin = 30;
-    } else if (isin(bondedMin, 360, 420)){ //6h - 7h
-        restMin = 45;
-    } else if (isin(bondedMin, 420, 720)){ //7h - 12h
-        restMin = 60;
-    } else if (bondedMin >= 720){ //12h -
-        restMin = 120;
-    }
-    return restMin;
-}
-/*
- * worktimeObjの構造は、8:30-16:45なら
- *
- * {
- *  - "start"  - "hour" : 8
- *             - "min"  : 30
- *  - "finish" - "hour" : 16
- *             - "min"  : 45
- * }
- *
- * これから拘束時間を求める関数。
- */
-function getBondedMinute(worktimeObj){
-    var _st = worktimeObj["start"];
-    var _fn = worktimeObj["finish"];
-    var startH = _st["hour"];
-    var startM = _st["min"];
-    var finishH = _fn["hour"];
-    var finishM = _fn["min"];
-    return (finishH - startH) * 60 + (finishM - startM);
-}
-/*
- * Day(MM/DD)に適当な西暦をつけ加えたYYYY/MM/DDみたいにする関数。
- * MM/DDなら2016/4/1と2017/4/1が区別できなくて、上書きされてしまうので。
- * textareaからデータを引き出すときに使われる。
- */
-function addYearToDay(theDay) {
-    var _day = theDay.split('/');
-    var _theMonth = parseInt(_day[0]);
-    var theDate = parseInt(_day[1]);
-    // 年明け前に正月のシフト考えるような年明けを挟むときの処理
-    year = today.getFullYear();
-    // このHTMLを開いている付きが11,12月で、textareaからのデータの月が1,2月。
-    // jsonやloclaStorageから読み込むときにこの処理は行われない。
-    if (today.getMonth() >= 10 && _theMonth <= 2){
-        year ++;
-    }
-    return year + "/" + theDay;
-}
-/*
- * jQueryの$2()とおんなじ
- * CSS-likeに#idとか.class、tagnameで、　HTML-DOM-Element or Array<HTML-DOM-Element>を返す関数。
- */
-function $2(elemId) {
-    if (elemId.startsWith('#')){
-        return document.getElementById(elemId.split('#')[1]);
-    } else if (elemId.startsWith('.')){
-        return document.getElementsByClassName(elemId.split('.')[1]);
-    } else {
-        return document.getElementsByTagName(elemId);
-    }
+
+function removeWTWithEditModal() {
+  var daykey = $('#editModal_date').val();
+  if (window.confirm('本当に'+daykey+'のデータを削除してよろしいですか？')){
+    removeWorktimes(daykey);
+    message(daykey+'のデータをクリアしました。'+UNDO_HTML_TEMPLATE, 'success');
+    refresh();
+    $('#editWTModal').modal('hide');
+  }
+  /* #editModal_repeat
+      - copy元div
+      - #wt_repetition
+        - copy先div
+  */
 }
 
 /*
- * 自前のformat関数。文字列内の{i}を順番に引数と入れ替えていく。
- */
-String.prototype.format = function (arg) {
-    var text = this;
-    for (var i=0; i < arguments.length; i++) {
-        text = text.replace("{" + i + "}", arguments[i]);
-    }
-    return text;
+0. wtArray
+
+	まず、WORKTIME_ARRAYがデータ本体です。
+	load時にはLocalStorageから以前のデータを回復します。
+	wtArrayは　worktimelib.js の Worktimeクラスのインスタンスの配列です。
+	普通のArray同様、iterableなので、forで回すことが出来ます。
+  ソース上では、関係のないworktime配列とデータ本体を区別するため大文字を使用してます。
+
+  //それぞれのworktimeごとの処理
+	for (var i = 0; i < WORKTIME_ARRAY.length; i++) {
+		var wt = WORKTIME_ARRAY[i];
+		//do something...
+	}
+
+	for-ofはIE11が未対応らしいですね！
+
+1. Worktime
+
+	Worktimeオブジェクトはそれの内に start 変数と finish 変数を持ちます。ともにDateオブジェクトで、それぞれ、開始時刻、終了時刻のDateオブジェクトです。
+	コンストラクタで呼び出すときの引数は(dateObj, dateObj)である必要があります。
+
+
+	s_date = new Date(2017, 9-1, 16, 6, 0);	//2017.9.16 6:00
+	f_date = new Date(2017, 9-1, 16, 18, 45);	//2017.9.16 18:45
+
+	var wt = new Worktime(s_date, f_date); 		//6時から18:45まで労働、これ大丈夫か？
+
+
+	また、toStringと対になるfromString関数によっても、Worktimeのインスタンスを生成できます。
+
+	var wt = Worktime.fromString("15081228-15081471") //上のwtと同じオブジェクト
+
+
+2. Worktimeのメソッド
+	Worktimeオブジェクトには利便性を計るため、メソッドが定義されています。
+
+	1. .toString()
+		start, finishを、1970年1月1日からのミリ秒を、100,000で割った値をハイフン'-'で繋いだstringにして返します。
+		(cf. https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Global_Objects/Date/now)
+
+		wt.toString() //-> "15043824-15044076"
+
+	2. .toHumanFriendlyString(timeFormat, joinFormat) / .thfs(timeFormat, joinFormat)
+		Worktimeオブジェクトの'時間'(時,分)を読みやすい形にして返します。timeFormat, joinFormatに関しては worktimelib.js の16行目あたりを参照。
+
+		wt.thfs('{h}時{m}分', '{s}～{f}');	//-> "6時00分～18時45分"
+		wt.thfs('{H}:{m}', '{s}-{f}'); 		//-> "06:00-18:45"
+		wt.thfs()							//-> "6:00 - 18:45"
+
+	3. .getDateString(format)
+		Wotrktimeオブジェクトの日付(年,月,日)を読みやすい形で返します。formatに関しては worktimelib.js の90行目あたりを参照。ちなみに、startの日付を参照する。
+
+		wt.getDateString('{Y}/{mo}/{d} ({dy})');	//-> "2017/9/16 (月)"
+		wt.getDateString('{y}.{MO}.{D} {dye}');		//-> "17.09.16 mon"
+		wt.getDateString('{dye}').toUpperCase();	//-> "MON"
+
+	以下略
+
+3. その他便利機能
+
+	1. フォーム(input[type=text,checkbox,radio]、select,textarea)の変更時に自動的にデータをLocalStorageに保存。
+		HTMLで、目的の要素に 'saveonchange' 属性をつけると、自動的に値を読み込んでくれます。ただし、必ずidの設定が必要です。
+
+		<input type=checkbox saveonchnage id=id1/>
+		このチェックボックスの値は変更時に自動的に保存されます。
+
+
+	2. HTMLのロード時、自動的にLocalStorageからデータを取得し、フォーム(input[type=text,checkbox,radio]、select,textarea)に値をセットする。
+		HTMLで、目的の要素に 'autoload' 属性をつけると、自動的に値を読み込んでくれます。ただし、必ずidの設定が必要です。
+
+		<input type=checkbox saveonchnage autoload id=id2/>
+		このチェックボックスの値は変更時に自動的に保存され、HTMLロード時に自動的に読み込まれます。
+
+		textboxなど、ボタンを押したときなどに保存したい場合、つまり自動的には保存/ロードせず関数で保存/ロードする場合は、saveCheckboxData($('#id'))などを用いる。workaholic.js の79行目から223行目までを見てください。ただし、必ずidの設定が必要です。
+
+		<input type=text autoload id=id3/>
+		<button onclick="saveTextboxData($('#id3'))">データを保存</button>
+*/
+
+function check(){
+	if(window.confirm('送信してよろしいですか？')){
+    	$('#ContactModal').modal('hide')
+    	$("#thanks").fadeIn();
+    	setTimeout( closeBox , 5000 );
+		return true;
+	} else {
+		return false;
+	}
 }
-// bodyのロード時に関数を実行。 document.body === $2('body')[0] -> true (===は型まで同じでtrueを返す言語構造)
-document.body.onload = bodyLoadEvent();
+function closeBox() {
+    $('#thanks').fadeOut();
+}
+function clearForm(){
+  	$("#Message").val('');
+}
+
+function transDisable(check){
+  //document.getElementById('trans').disabled = check.checked;
+  $('#trans').prop('disabled', $(check).prop('checked'));
+  //とやってることは一緒だが、それぞれのDOMは別物のオブジェクトとして定義されているため
+  //document.getElementById('trans').attr()とか
+  //$('#trans').disabledとかはできない
+  //高校生なら支給月、6ヶ月の定期代もいらない
+  $('#six_month_fee').prop('disabled', $(check).prop('checked'));
+  $('#fee_provide_month').prop('disabled', $(check).prop('checked'));
+}
+
+//給与概算設定modalの保存ボタンを押したときに呼ばれる
+function saveSalarySettingWithModal(btnElem){
+  //ボタンがdisabledなら処理を終了。
+  if ($(btnElem).prop('disabled')) return;
+  var employmentPattern = $('input[name=employmentPattern]:checked').val();
+  var six_month_fee = $('#six_month_fee').val();
+
+  //LSにcalModal内の全てのラジオボタンの選択を保存。
+  saveRadioButtonData($('#salarySettingModal input[type=radio]:checked'));
+  //checkbox
+  saveCheckboxData($('#salarySettingModal input[type=checkbox]'));
+  //number box
+  saveTextboxData($('#salarySettingModal input[type=number]'));
+  //text box
+  //saveTextboxData($('#salarySettingModal input[type=text]'));//NASA
+  //select
+  saveSelectData($('#salarySettingModal select'));
+  //modalを閉じる
+  $('#salarySettingModal').modal('hide');
+}
+
 </script>
+</body>
 </html>
