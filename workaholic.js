@@ -73,7 +73,7 @@ function makeTimeOptions() {
 			for (var i = -3; i <= 1; i++) {
 				var y = today.getFullYear()+i;
 				$('<option>', {
-					text: y+'年から始まる',
+					text: y+'年のシフトです。',
 					'value': y,
 					'selected': i==0
 				}).appendTo(this);
@@ -109,7 +109,6 @@ function interpreteTA(){
 		    var _as = dayMatch[0].split('/'); //array of string['8', '14']
 		    if (interterm && parseInt(_as[0]) < mo || (parseInt(_as[0]) == mo && parseInt(_as[1]) < d)){
 		    	//年が明けた。
-		    	y++;
 		    }
 		    mo = parseInt(_as[0]);//8
 		    d = parseInt(_as[1]);//14
@@ -211,9 +210,10 @@ function loadWtArrayFromLS(){
 
 //複数のWorktimeをwtArrayにpush
 function addAllWithTA(worktimes) {
-	if ($('#interterm_checkbox').prop('checked')){
-		for (var hmk in splitByHalfMonth(worktimes)){
-			addHalfMonthWt(obj[hmk]);
+	if ($('#inter_term_checkbox').prop('checked')){
+		obj = splitByHalfMonth(worktimes);
+  for (var hmk in obj){
+		addHalfMonthWt(obj[hmk]);
 		}
 	} else {
 		addHalfMonthWt(worktimes);
@@ -585,9 +585,7 @@ function setListModalContent(monthkey){
 			click: function(e) {
 				$('#listWTModal').modal('hide');
 				setEditModalContent($(this).attr('data-key'));
-				setTimeout(function () {
-					$('#editWTModal').modal();
-				},100);
+				$('#editWTModal').modal('show');
 			}
 		});
 		//その日の日付
@@ -899,9 +897,13 @@ function getWtFromSels(daykey, wrapper) {
 function checkSalarySettingValidity(){
 	var emp = parseInt($("input[name=employmentPattern]:checked").val());
 	var ready = checkNumberInput($('#hourWage'));
-	//ready = checkNumberInput($('#fee_provide_month')) && ready;
-	if (emp == 0) ready = checkNumberInput($('#six_month_fee')) && ready;
-	ready = checkNumberInput($('#trans')) && ready;
+	if (emp == 0) {
+	ready = checkButtonsInput($('#fee_provide_month input')) && ready;
+	ready = checkNumberInput($('#six_month_fee')) && ready;
+	}else if(emp == 1,2,3){
+		ready = checkNumberInput($('#trans')) && ready;
+		ready = checkNumberInput($('#one_month_fee')) && ready;
+	}
 	if (isNaN(emp)){
 		$("input[name=employmentPattern]").addClass('is-invalid');
 		ready = false;
@@ -925,6 +927,8 @@ function launchSalaryModal(btnElem){
 function setSalarySettingModalContent() {
 	if (!$('#regular').prop('checked')) {
 		$('#forRegular').css('display', 'none');
+	}else{
+		$('#forNonRegular').css('display', 'none');
 	}
 }
 
@@ -941,10 +945,11 @@ function setCalcSalaryModalContent(){
                 <div style="display: none">ここに1ヶ月の詳細データ</div>
               </td>
             </tr>*/
-    var obj = splitByMonth();//{月:[wt1, wt2...], 月2:[wt1, wt2...]...}
-    var hourWage = parseInt($('#hourWage').val());//整数
-	var fee_provide_month = parseInt($('#fee_provide_month').val());//整数
+  var obj = splitByMonth();//{月:[wt1, wt2...], 月2:[wt1, wt2...]...}
+  var hourWage = parseInt($('#hourWage').val());//整数
+	var fee_month_array = $('.fee_month:checked').map(function() {return parseInt($(this).val());}).get();
 	var six_month_fee = parseInt($('#six_month_fee').val());//整数
+	var one_month_fee = parseInt($('#one_month_fee').val());//整数
 	var isHSStudent = $('#hs_student_checkbox').prop('checked');// true or false
 	var trans = parseInt($('#trans').val());
 	var emp = parseInt($("input[name=employmentPattern]:checked").val());
@@ -982,34 +987,45 @@ function setCalcSalaryModalContent(){
     		var actualWorkingHour =  wt.getActualMin()/60;
     		//実働時間. (拘束時間-休憩時間)
     		var baseSalary = actualWorkingHour * hourWage;
-    		//基本給 = 実質労働時間 * 時給
-    		var longBonus = actualWorkingHour > 8 ? (actualWorkingHour - 8) * hourWage * 0.25 : 0;
-    		//時間外手当[円] = 実働時間[h] > 8 なら (実働時間[h] - 8) * 時給 * 0.25 、そうじゃないなら 0;
+				if (actualWorkingHour >= 8){
+					baseSalary = 8 * hourWage;
+				}
+    		//基本給 = 実質労働時間(8時間以下の分) * 時給
+    		var longBonus = actualWorkingHour > 8 ? (actualWorkingHour - 8) * hourWage * 1.25 : 0;
+    		//時間外手当[円] = 実働時間[h] > 8 なら (実働時間[h] - 8) * 時給 * 1.25 、そうじゃないなら 0;
     		var midnightBonus = wt.getMidnightMin()/60 * hourWage * 0.25;
     		//深夜手当[円] = 22時から6時までの労働時間[h] * 時給 * 0.25;
     		wholeGivenYen += baseSalary + longBonus + midnightBonus;
     		//支給額計[円] += ____
     		wholeMidnightBonus += midnightBonus;
-			wholeMidnightHours += wt.getMidnightMin()/60;
+				wholeMidnightHours += wt.getMidnightMin()/60;
     		wholeBaseSalary += baseSalary;
     		wholeLongBonus += longBonus;
-			wholeLongHours += actualWorkingHour > 8 ? (actualWorkingHour - 8) : 0;
+				wholeLongHours += actualWorkingHour > 8 ? (actualWorkingHour - 8) : 0;
     	}//勤務時間オブジェごとの処理はココまで
 
 		var _s = monthkey.split('/');
 		var full_year = parseInt(_s[0]);//2017
 		var month = parseInt(_s[1]);//9
 
-		if(emp == 0 && (month == fee_provide_month || month == fee_provide_month + 6)){
-			transPay = six_month_fee;
-		}else if(emp == 0 ){
+		if(isHSStudent == true){
 			transPay = 0;
-		}else if(emp ==1 || 2 || 3){
-			transPay = trans * days.length;
+		}else if(emp == 0 && fee_month_array.indexOf(month) == -1){
+			transPay = 0;
+		}else if(emp == 0){
+			transPay = six_month_fee;
+		}else if(emp == 1 || 2 || 3){
+			if(days.length < 17){
+				transPay = trans * days.length;
+			}else if(days.length >= 17){
+				transPay = one_month_fee
+			}
+			if(transPay >= 30000){
+				transPay = 30000;
+			}
 		}
-		chgCostume = 200 * days.length;
 
-		wholeGivenYen = wholeGivenYen + transPay + chgCostume;
+		chgCostume = 250 * days.length;
 
  		//控除されるかされないかのArray。されるなら1,されないなら0。雇用保険、健保基本保険、健保特定保険、厚生年金保険、組合費の順番。
 		var deductArray =
@@ -1032,7 +1048,7 @@ function setCalcSalaryModalContent(){
 		var pension = Math.round( wholeGivenYen * 0.0915 * deductArray[emp][3] ); // 厚生年金保険料率は18.30%で自己負担はその半分。
 		var union = Math.round( 700 * deductArray[emp][4] ); //一律700円だよ
 
-		var deduction = empIns + healthInsS + healthInsB + pension + union; //交通費は課税対象じゃないはずが明細見てる限りなぜか課税対象
+		var deduction = empIns + healthInsS + healthInsB + pension + union;
 		var taxable = wholeGivenYen - deduction;
 
 		var taxArray = [0,88000,89000,90000,91000,92000,93000,94000,95000,96000,99000];
@@ -1045,39 +1061,64 @@ function setCalcSalaryModalContent(){
 		}
 
 		//所得税を求めましょう。40歳未満の扶養家族がいない人を想定しています。
-		//財務省の告示する給与所得の源泉徴収月額表の甲欄の扶養家族0人を参照。
+		//財務省の告示する給与所得の源泉徴収月額表の扶養家族0人を参照。
 		//（平成24年3月31日財務省告示第115号別表第一（平成28年３月31日財務省告示第105号改正））
 		//実際は3,550,000円まで延々続いていますが、302,000円で止めてます。多分そんなに稼げない。
-		var taxList = 
+
+		//扶養控除申告書を提出済なら0,でなければ1
+		if($('#main_work_checkbox').prop('checked')){
+			mainwork = 0;
+		}else{
+			mainwork = 1;
+		}
+
+		var taxList =
 		[
-			0,130,180,230,290,340,390,440,490,540,590,640,720,830,930,
-			1030,1130,1240,1340,1440,1540,1640,1750,1850,1950,2050,2150,2260,2360,2460,
-			2550,2610,2680,2740,2800,2860,2920,2980,3050,3120,3200,3270,3340,3410,3480,
-			3550,3620,3700,3770,3840,3910,3980,4050,4120,4200,4270,4340,4410,4480,4550,
-			4630,4700,4770,4840,4910,4980,5050,5130,5200,5270,5340,5410,5480,5560,5680,
-			5780,5890,5990,6110,6210,6320,6420,6530,6640,6750,6850,6960,7070,7180,7280,
-			7390,7490,7610,7710,7820,7920,8040,8140,8250,8420,8670
+			[
+				0,130,180,230,290,340,390,440,490,540,590,640,720,830,930,
+				1030,1130,1240,1340,1440,1540,1640,1750,1850,1950,2050,2150,2260,2360,2460,
+				2550,2610,2680,2740,2800,2860,2920,2980,3050,3120,3200,3270,3340,3410,3480,
+				3550,3620,3700,3770,3840,3910,3980,4050,4120,4200,4270,4340,4410,4480,4550,
+				4630,4700,4770,4840,4910,4980,5050,5130,5200,5270,5340,5410,5480,5560,5680,
+				5780,5890,5990,6110,6210,6320,6420,6530,6640,6750,6850,6960,7070,7180,7280,
+				7390,7490,7610,7710,7820,7920,8040,8140,8250,8420,8670
+			],
+			[
+				0,3200,3200,3200,3200,3300,3300,3300,3400,3400,3500,3500,3600,3600,3700,
+				3800,3800,3900,4000,4100,4100,4200,4300,4500,4800,5100,5400,5700,6000,6300,
+				6600,6800,7100,7500,7800,8100,8400,8700,9000,9300,9600,9900,10200,10500,10800,
+				11100,11400,11700,12000,12400,12700,13200,13900,14600,15300,16000,16700,17500,18100,18800,
+				19500,20200,20900,21500,22200,22700,23300,23900,24400,25000,25500,26100,26800,27400,28400,
+				29300,30300,31300,32400,33400,34400,35400,36400,37500,38500,39400,40400,41500,42500,43500,
+				44500,45500,46600,47600,48600,49500,50500,51600,52300,52900,53500
+			]
 		];
 
 		var tax;
 		//最後の項よりも大きい額を稼いでいる
 		if(taxable >= taxArray[taxArray.length -1]){
-			tax = taxList[taxArray.length -1];
+			tax = taxList[mainwork][taxArray.length -1];
 		}else{
 			for(i=taxArray.length-1;i>0;i--){
 			    if(taxable >= taxArray[i-1] && taxable < taxArray[i]){
-			      	tax = taxList[i-1];
+			      	tax = taxList[mainwork][i-1];
 			      	break;
 			    }
 			}
+		}
+		if(mainwork == 1 && taxable < 88000 && taxable >= 50000){
+			tax = taxable * 0.03063;
+		}else if(mainwork == 1 && taxable < 50000){
+			tax = 0;
 		}
 		//console.log(taxArray.length) -> 101
 
 		//控除額計
 		wholeOmittedYen = deduction + tax;
+		wholeGivenYen = wholeGivenYen + transPay + chgCostume;
 
 		var _a = new Array();
-    	_a.push('<span class="aaa">' + '支給計: ' + insertComma(Math.round(wholeGivenYen)) + '円');
+    _a.push('<span class="aaa">' + '支給計: ' + insertComma(Math.round(wholeGivenYen)) + '円');
 		_a.push('<span class="bbb">' + '基本給: ' + insertComma(Math.round(wholeBaseSalary)) + '円');
 		_a.push('<span class="bbb">' + '深夜早朝手当: ' + insertComma(Math.round(wholeMidnightBonus)) + '円');
 		_a.push('<span class="bbb">' + '時間外手当: ' + insertComma(Math.round(wholeLongBonus)) + '円');
@@ -1091,13 +1132,14 @@ function setCalcSalaryModalContent(){
 			_a.push('<span class="bbb">' + '健保特定保険: ' + insertComma(healthInsS) + '円');
 			_a.push('<span class="bbb">' + '厚生年金保険: ' + insertComma(pension) + '円');
 		}
+		_a.push('<span class="bbb">' + '課税対象: ' + insertComma(Math.round(taxable)) + '円');
+		_a.push('<span class="bbb">' + '所得税: ' + insertComma(Math.round(tax)) + '円');
 		if(emp == 0){
 			_a.push('<span class="bbb">' + '組合費: ' + insertComma(union) + '円');
 		}
-		_a.push('<span class="bbb">' + '所得税: ' + insertComma(tax) + '円');
 		_a.push('<span class="aaa">' + '勤怠関連')
-    	_a.push('<span class="bbb">' + '出勤日数: ' + days.length + '日');
-    	_a.push('<span class="bbb">' + '休日日数: ' + (monthday(full_year, month) - days.length) + '日');
+    _a.push('<span class="bbb">' + '出勤日数: ' + days.length + '日');
+    _a.push('<span class="bbb">' + '休日日数: ' + (monthday(full_year, month) - days.length) + '日');
 		_a.push('<span class="bbb">' + '深夜早朝計: ' + wholeMidnightHours + '時間');
 		_a.push('<span class="bbb">' + '時間外計: ' + wholeLongHours + '時間');
 
@@ -1128,4 +1170,28 @@ function setCalcSalaryModalContent(){
 	    td.appendTo(tr);
 	    tr.appendTo('#calcSalaryTbody');
     }//月ごとの処理ココまで
+}
+
+//checkbox of buttons!
+function checkButtonsInput(elems) {
+ var flag = false;
+ if (elems.parent().prop('disabled')){
+  return true;
+ } else {
+  elems.each(function(){
+   if ($(this).prop('checked')){
+    flag = true;
+    return false;//breakと同義
+   }
+  });
+  if (flag){
+      elems.parent().removeClass('btn-outline-danger');
+      elems.parent().addClass('btn-outline-secondary');
+      return true;
+  } else {
+      elems.parent().removeClass('btn-outline-secondary');
+      elems.parent().addClass('btn-outline-danger');
+      return false;
+  }
+ }
 }
